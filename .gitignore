@@ -72,7 +72,6 @@ Thumbs.db
 # --- AMP_PhysioChem_Predictor ---
 # Keep tracked: source, app.py, CITATION.*, README, requirements, small data/*.csv as needed.
 # Hugging Face Spaces reject large binaries in plain Git — use Hub, Space "Files", or Git LFS/Xet.
-# See docs/hf-space/DEPLOY.md
 
 # Weight files: ignored by default (large binaries); tracked when under checkpoints/.
 *.pt
@@ -106,10 +105,8 @@ scripts/ultra_fast_training.py
 scripts/verify_ablation_comprehensive.py
 src/ablation_models.py
 
-# Internal docs (omit security notes from git); keep HF deploy guide tracked
-docs/*
-!docs/hf-space/
-!docs/hf-space/**
+# Documentation (local / deploy notes — not required for inference)
+docs/
 
 # Local tool caches (e.g. matplotlib font cache under repo)
 .mplconfig/
