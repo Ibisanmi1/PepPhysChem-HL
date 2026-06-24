@@ -1,24 +1,3 @@
-#!/usr/bin/env python3
-"""
-Gradio UI for AMP PhysioChem Predictor — Hugging Face Spaces entrypoint and local demo.
-
-Affiliation: Computational Drug Discovery programme, Kumar Research Group (UNSW Sydney).
-Group: https://nareshkumar.com.au
-
-Run locally:
-  cd /path/to/AMP_PhysioChem_Predictor
-  pip install -r requirements.txt
-  python app.py
-
-Requires hybrid checkpoint (see README): checkpoints/Half_Life_cnn_bilstm_embedding_physchem.pt
-or AMP_PHYSIOCHEM_AI_ROOT pointing at a repo that contains checkpoints/.
-
-After each run, optional **ComprehensiveAnalysis** figures (same as CLI batch) are written under
-`output/gradio_figures/` at **high DPI** (default **420**, set `AMP_WEB_FIGURE_DPI` to change).
-The UI shows full-width panels with preview; a **ZIP** bundles the native PNGs. The predictor uses
-the **default hybrid checkpoint** unless `AMP_MODEL_PATH` is set. Nothing here deploys to Hugging Face automatically.
-"""
-
 from __future__ import annotations
 
 import contextlib
@@ -109,11 +88,11 @@ def _high_res_matplotlib_saves(dpi: Optional[int] = None) -> Any:
         kw["dpi"] = max(int(kw.get("dpi") or 0), int(target))
         return orig(*args, **kw)
 
-    plt.savefig = _savefig  # type: ignore[assignment]
+    plt.savefig = _savefig
     try:
         yield
     finally:
-        plt.savefig = orig  # type: ignore[assignment]
+        plt.savefig = orig
 
 
 def _prepare_results_for_analysis(df: pd.DataFrame) -> pd.DataFrame:
@@ -174,7 +153,7 @@ def _run_comprehensive_figures(results_df: pd.DataFrame, prefix: str) -> Tuple[L
         with contextlib.redirect_stdout(io.StringIO()), _high_res_matplotlib_saves():
             comp = runner.ComprehensiveAnalysis(out_dir)
             comp.analyze_results(clean_df, output_prefix=prefix)
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return [], f"### Analysis figures\n*Generation failed:* `{type(e).__name__}`: {e}"
 
     imgs = _collect_gradio_figures(out_dir, prefix)
@@ -469,7 +448,7 @@ def predict_single(
             [],
             None,
         )
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         return (f"### Error\n\n`{type(e).__name__}`: {e}", pd.DataFrame(), None, "", [], None)
 
     md = _format_single_markdown(result)
@@ -478,7 +457,7 @@ def predict_single(
     aa_chart: Optional[str] = None
     try:
         aa_chart = _single_sequence_aa_composition_chart_png(result.get("sequence", seq))
-    except Exception:  # noqa: BLE001
+    except Exception:
         aa_chart = None
 
     fig_md = ""
@@ -567,7 +546,7 @@ def predict_batch(
             else sequences
         )
         aa_batch_chart = _batch_pooled_aa_composition_chart_png(seqs_for_aa)
-    except Exception:  # noqa: BLE001
+    except Exception:
         aa_batch_chart = None
 
     fig_md = ""
@@ -798,7 +777,7 @@ try:
         block_label_text_weight="600",
         input_border_width="1px",
     )
-except Exception:  # noqa: BLE001
+except Exception:
     APP_THEME = gr.themes.Soft(
         primary_hue="blue",
         secondary_hue="blue",
@@ -1074,7 +1053,7 @@ if __name__ == "__main__":
         _show_err = str(_raw_show).strip().lower() in ("1", "true", "yes")
     else:
         _show_err = not _on_hf_space()
-    # Gradio SSR probes localhost; that fails inside HF Spaces (and some headless images).
+
     _launch_kw: Dict[str, Any] = {
         "server_name": "0.0.0.0",
         "server_port": port,

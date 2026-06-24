@@ -15,6 +15,7 @@ lib64/
 parts/
 sdist/
 var/
+old_backup/
 wheels/
 share/python-wheels/
 *.egg-info/
@@ -28,6 +29,9 @@ venv/
 env/
 ENV/
 .venv/
+# Nested git metadata folders (not the repo-root .gitignore / .gitattributes files)
+.gitignore/
+.gitattributes/
 
 # IDE & editors
 .vscode/
@@ -37,6 +41,10 @@ ENV/
 *~
 .project
 .pydevproject
+bestmodelplot/
+
+# Local Peptiverse experiment (data, checkpoints, training logs, hyperopt)
+peptiversedata/
 
 # OS
 .DS_Store
@@ -83,6 +91,21 @@ training_logs/
 # Best-parameter JSON dumps (local tuning / search — not required for inference UI)
 best_parameters/
 
+# Training / ablation / plotting (not required for app.py or run_AMP_PhysioChem_Predictor.py)
+scripts/hybrid_physchem_matrix_utils.py
+scripts/plot_learning_curves_individual.py
+scripts/plot_top3_model_predictions.py
+scripts/run_component_ablation.py
+scripts/run_comprehensive_ablation.py
+scripts/run_retrain_all_rdkit.py
+scripts/save_best_params.py
+scripts/train_cnn_bilstm_physchem_embedding.py
+scripts/train_hybrid_physchem_matrix.py
+scripts/ultra_fast_embedding_training.py
+scripts/ultra_fast_training.py
+scripts/verify_ablation_comprehensive.py
+src/ablation_models.py
+
 # Internal docs (omit security notes from git); keep HF deploy guide tracked
 docs/*
 !docs/hf-space/
@@ -93,7 +116,8 @@ docs/*
 
 # Cursor / local tooling
 .cursor/
-
+revision_artifacts/
+automation_logs/
 # ML experiment trackers
 wandb/
 mlruns/
@@ -108,6 +132,7 @@ htmlcov/
 coverage.xml
 *.cover
 .hypothesis/
+revisions/
 
 # Optional local bundles
 *_figures_hires.zip

@@ -1,2 +1,0 @@
-# This file keeps checkpoints/ in Git so the Hugging Face Space has the folder.
-# Upload your .pt weights via Space → Files and versions (not via git push — HF rejects large binaries).
