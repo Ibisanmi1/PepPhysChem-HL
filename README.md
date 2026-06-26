@@ -1,14 +1,4 @@
----
-title: AMP PhysioChemical Predictor
-emoji: 🧬
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-app_file: app.py
-pinned: false
-license: apache-2.0
-short_description: AMP half-life and physchem profiles for peptides (research).
----
+
 
 # PepPhysChem-HL
 
