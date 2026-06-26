@@ -91,8 +91,12 @@ def _default_results_output_dir() -> Path:
 
 
 HYBRID_CHECKPOINT_BASENAMES = (
+    "Half_Life_cnn_bilstm_embedding_physchem_run1.pt",
     "Half_Life_cnn_bilstm_embedding_physchem.pt",
     "Half_Life_cnn_bilstm_physchem_embedding.pt",
+)
+DEFAULT_HYBRID_TRAINING_CONFIG = (
+    project_root / "training_logs" / "1_cnn_bilstm_hybrid_physchem_matrix" / "training_config.json"
 )
 
 
@@ -849,7 +853,11 @@ class PepPhysChemHLPredictor:
 
         if model_path is None:
             model_path = _resolve_default_hybrid_checkpoint()
-            config_path = None
+            config_path = (
+                DEFAULT_HYBRID_TRAINING_CONFIG
+                if DEFAULT_HYBRID_TRAINING_CONFIG.is_file()
+                else None
+            )
         else:
             model_path = Path(model_path)
             if training_config_path:
@@ -1365,8 +1373,8 @@ Examples:
         type=str,
         default=None,
         help=(
-            'Path to .pt checkpoint (default: best hybrid CNN–BiLSTM+physchem, same as '
-            'Half_Life_cnn_bilstm_embedding_physchem.pt under ./checkpoints '
+            'Path to .pt checkpoint (default: best hybrid CNN–BiLSTM+physchem run 1: '
+            'Half_Life_cnn_bilstm_embedding_physchem_run1.pt under ./checkpoints '
             'or PEPPHYSOCHEM_HL_AI_ROOT/checkpoints)'
         ),
     )

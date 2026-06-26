@@ -1,3 +1,14 @@
+---
+title: AMP PhysioChemical Predictor
+emoji: 🧬
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+app_file: app.py
+pinned: false
+license: apache-2.0
+short_description: AMP half-life and physchem profiles for peptides (research).
+---
 
 # PepPhysChem-HL
 
@@ -35,6 +46,11 @@ Usage
 
 #### Example 1: Single Sequence Analysis
 
+Uses the **default recommended checkpoint** automatically:
+`checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt` (hybrid CNN–BiLSTM + physicochemical matrix; top-ranked in `data/model_comparison.csv`).
+
+**Training logs:** `training_logs/1_cnn_bilstm_hybrid_physchem_matrix/` (`training.log`, `training_config.json`, `final_results.json`, `epoch_metrics.csv`)
+
 ```bash
 python run_PepPhysChem_HL.py \
     --sequence "KWKLFKKIGAVLKVL" \
@@ -69,13 +85,25 @@ python run_PepPhysChem_HL.py \
 - Comprehensive report (`*_analysis_report.txt`)
 - And more (see Output Files section below)
 
-#### Example 3: if you like to use other Checkpoint
+#### Example 3: Use an explicit checkpoint (optional)
+
+Omit `--model_path` to use the default `Half_Life_cnn_bilstm_embedding_physchem_run1.pt` weights above.
+
+```bash
+python run_PepPhysChem_HL.py \
+    --model_path "checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt" \
+    --training_config "training_logs/1_cnn_bilstm_hybrid_physchem_matrix/training_config.json" \
+    --sequence "KWKLFKKIGAVLKVL" \
+    --output "single_result_hybrid.csv"
+```
+
+**Alternative architecture** (embedding-only CNN–BiLSTM, no physicochemical block):
 
 ```bash
 python run_PepPhysChem_HL.py \
     --model_path "checkpoints/Half_Life_cnn_bilstm_embedding_2.pt" \
     --sequence "KWKLFKKIGAVLKVL" \
-    --output "single_result_model2.csv"
+    --output "single_result_embedding_only.csv"
 ```
 
 
@@ -147,4 +175,4 @@ PepPhysChem-HL/
 
 If this pipeline contributes to your research, please cite:
 
-Ibisanmi TA, Bahatheg G, Mishra (Baishnab) SK, Willcox M, Kumar N (2026). PepPhysChem-HL: An Integrated Command-Line and Web Platform for Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of Therapeutic Peptides.
+Tope Abraham Ibisanmi, Ghayah Bahatheg, Shyam Kumar Mishra (Baishnab), Mark Willcox, and Naresh Kumar (2026). PepPhysChem-HL: An Integrated Command-Line and Web Platform for Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of Therapeutic Peptides.

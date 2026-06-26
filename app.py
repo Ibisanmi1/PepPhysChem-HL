@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import contextlib
-import html
 import inspect
 import io
 import math
@@ -20,26 +19,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-LAB_WEB = "https://nareshkumar.com.au"
 GITHUB_REPO = "https://github.com/Ibisanmi1/PepPhysChem-HL"
 SOFTWARE_NAME = "PepPhysChem-HL"
-SOFTWARE_FULL_TITLE = (
-    "PepPhysChem-HL: An Integrated Command-Line and Web Platform for "
-    "Physicochemical Profiling and Deep Learning-Based Half-Life Prediction "
-    "of Therapeutic Peptides"
-)
-CITATION_BIB = PROJECT_ROOT / "CITATION.bib"
-CITATION_CFF = PROJECT_ROOT / "CITATION.cff"
-
-CITATION_INTRO = "If this pipeline contributes to your research, please cite:"
-CITATION_LINE = (
-    "Ibisanmi TA, .........., ............., ................, ............, ............... "
-    "Willcox M, Kumar N (2026). "
-    f"{SOFTWARE_FULL_TITLE}."
-)
-CITATION_FULL_TEXT = (
-    f"{CITATION_INTRO}\n\n{CITATION_LINE}\nAvailable from: {GITHUB_REPO}\n"
-)
 
 PRESET_RECOMMENDED = "__recommended__"
 PRESET_HYBRID_PHYSCHEM_MATRIX = "cnn_bilstm_hybrid_physchem_matrix"
@@ -181,27 +162,6 @@ def _run_comprehensive_figures(results_df: pd.DataFrame, prefix: str) -> Tuple[L
     )
 
 
-def _read_text(path: Path) -> str:
-    try:
-        return path.read_text(encoding="utf-8")
-    except OSError:
-        return f"(File not found: {path.name})"
-
-
-def _build_citation_zip() -> str:
-    """Bundle BibTeX, CITATION.cff, and plain-text CITATION.txt (GitHub-style pack)."""
-    out_dir = PROJECT_ROOT / "output"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    zip_path = out_dir / "PepPhysChem-HL_citation.zip"
-    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
-        if CITATION_BIB.is_file():
-            zf.write(CITATION_BIB, arcname="CITATION.bib")
-        if CITATION_CFF.is_file():
-            zf.write(CITATION_CFF, arcname="CITATION.cff")
-        zf.writestr("CITATION.txt", CITATION_FULL_TEXT.strip() + "\n")
-    return str(zip_path)
-
-
 def _checkpoint_roots() -> List[Path]:
     import run_PepPhysChem_HL as runner
 
@@ -225,37 +185,44 @@ def _find_checkpoint(basenames: List[str]) -> Optional[Path]:
 def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
     """
     Returns (model_path, training_config_path) for PepPhysChemHLPredictor.
-    None, None → repository default hybrid resolution.
     """
+    import run_PepPhysChem_HL as runner
+
     env_mp = (
         os.environ.get("PEPPHYSCHEM_HL_MODEL_PATH")
         or os.environ.get("AMP_MODEL_PATH")
         or ""
     ).strip() or None
+    default_cfg = (
+        PROJECT_ROOT
+        / "training_logs"
+        / "1_cnn_bilstm_hybrid_physchem_matrix"
+        / "training_config.json"
+    )
+    default_ck_names = list(runner.HYBRID_CHECKPOINT_BASENAMES)
 
     if preset_key == PRESET_RECOMMENDED:
-        return env_mp, None
+        if env_mp:
+            return env_mp, None
+        ck = _find_checkpoint(default_ck_names)
+        if ck is None:
+            raise FileNotFoundError(
+                "Checkpoint for the recommended hybrid model not found. "
+                f"Expected `{runner.HYBRID_CHECKPOINT_BASENAMES[0]}` under "
+                "`checkpoints/` here or under PEPPHYSOCHEM_HL_AI_ROOT."
+            )
+        tcp = str(default_cfg) if default_cfg.is_file() else None
+        return str(ck), tcp
 
     if preset_key == PRESET_HYBRID_PHYSCHEM_MATRIX:
-        cfg = (
-            PROJECT_ROOT
-            / "training_logs"
-            / "1_cnn_bilstm_hybrid_physchem_matrix"
-            / "training_config.json"
-        )
-        ck = _find_checkpoint(
-            [
-                "Half_Life_cnn_bilstm_embedding_physchem.pt",
-                "Half_Life_cnn_bilstm_embedding_physchem_run1.pt",
-            ]
-        )
+        ck = _find_checkpoint(default_ck_names)
         if ck is None:
             raise FileNotFoundError(
                 "Checkpoint for the hybrid physicochemical matrix benchmark not found. "
-                "Expected `Half_Life_cnn_bilstm_embedding_physchem.pt` (or `_run1`) under "
+                f"Expected `{runner.HYBRID_CHECKPOINT_BASENAMES[0]}` under "
                 "`checkpoints/` here or under PEPPHYSOCHEM_HL_AI_ROOT."
             )
-        tcp = str(cfg) if cfg.is_file() else None
+        tcp = str(default_cfg) if default_cfg.is_file() else None
         return str(ck), tcp
 
     raise ValueError(f"Unknown model preset: {preset_key}")
@@ -756,6 +723,19 @@ div.foot a { color: var(--unsw-navy-mid); font-weight: 600; }
   border-radius: 10px;
   padding: 1rem 1.15rem;
   margin-bottom: 0.75rem;
+  color: var(--ink);
+}
+.cite-panel code,
+.cite-panel-code {
+  display: block;
+  white-space: pre-wrap;
+  font-size: 0.92em;
+  color: var(--ink) !important;
+  background: #f1f5f9 !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+  line-height: 1.55;
 }
 .figure-gallery-wrap {
   margin-top: 0.5rem;
@@ -779,6 +759,123 @@ footer { opacity: 0.85; font-size: 0.8rem; }
   border: 1px solid #e5edf6;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
   max-width: 100%;
+}
+
+/* Dark mode / night theme: keep custom panels readable (Gradio may flip global text to light). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #e8eef7;
+    --muted: #b8c5d6;
+    --surface: #1a2332;
+    --line: #3d4f66;
+  }
+  .gradio-container {
+    background: linear-gradient(165deg, #0f1724 0%, #141e2e 35%, #1a2332 100%) !important;
+    color: var(--ink) !important;
+  }
+  .app-shell {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.35);
+  }
+  .panel-inset,
+  .cite-panel {
+    background: #243044;
+    border-color: #3d4f66;
+    color: var(--ink) !important;
+  }
+  .cite-panel strong,
+  .cite-panel code,
+  .cite-panel-code {
+    color: #f0f4fa !important;
+    background: #1a2332 !important;
+    border-color: #3d4f66;
+  }
+  .section-heading {
+    color: #a8d9ff;
+    border-bottom-color: #5eb0e8;
+  }
+  div.foot,
+  .foot-cite {
+    border-top-color: #3d4f66;
+    color: var(--muted);
+  }
+  .foot-cite-intro {
+    color: #a8d9ff;
+  }
+  .foot-cite-body {
+    color: var(--ink);
+  }
+  div.foot a {
+    color: #7ec8ff;
+  }
+  .aa-composition-chart img {
+    border-color: #3d4f66;
+  }
+}
+
+.dark .gradio-container,
+[data-theme="dark"] .gradio-container,
+.gradio-container.dark {
+  background: linear-gradient(165deg, #0f1724 0%, #141e2e 35%, #1a2332 100%) !important;
+  color: #e8eef7 !important;
+}
+.dark .app-shell,
+[data-theme="dark"] .app-shell,
+.gradio-container.dark .app-shell {
+  background: #1a2332 !important;
+  border-color: #3d4f66 !important;
+  color: #e8eef7 !important;
+}
+.dark .panel-inset,
+.dark .cite-panel,
+[data-theme="dark"] .panel-inset,
+[data-theme="dark"] .cite-panel,
+.gradio-container.dark .panel-inset,
+.gradio-container.dark .cite-panel {
+  background: #243044 !important;
+  border-color: #3d4f66 !important;
+  color: #e8eef7 !important;
+}
+.dark .cite-panel code,
+.dark .cite-panel-code,
+[data-theme="dark"] .cite-panel code,
+[data-theme="dark"] .cite-panel-code,
+.gradio-container.dark .cite-panel code,
+.gradio-container.dark .cite-panel-code {
+  color: #f0f4fa !important;
+  background: #1a2332 !important;
+  border-color: #3d4f66 !important;
+}
+.dark .section-heading,
+[data-theme="dark"] .section-heading,
+.gradio-container.dark .section-heading {
+  color: #a8d9ff !important;
+  border-bottom-color: #5eb0e8 !important;
+}
+.dark .foot-cite,
+.dark div.foot,
+[data-theme="dark"] .foot-cite,
+[data-theme="dark"] div.foot,
+.gradio-container.dark .foot-cite,
+.gradio-container.dark div.foot {
+  border-top-color: #3d4f66 !important;
+  color: #b8c5d6 !important;
+}
+.dark .foot-cite-intro,
+[data-theme="dark"] .foot-cite-intro,
+.gradio-container.dark .foot-cite-intro {
+  color: #a8d9ff !important;
+}
+.dark .foot-cite-body,
+[data-theme="dark"] .foot-cite-body,
+.gradio-container.dark .foot-cite-body {
+  color: #e8eef7 !important;
+}
+.dark div.foot a,
+[data-theme="dark"] div.foot a,
+.gradio-container.dark div.foot a {
+  color: #7ec8ff !important;
 }
 """
 
@@ -822,11 +919,8 @@ _HERO_HTML = f"""
         An integrated command-line and web platform for <strong>physicochemical profiling</strong> and
         <strong>deep learning-based half-life prediction</strong> of therapeutic peptides. The workbench supports
         single-sequence and batch prediction, optional profiling, and publication-quality figures.
-        Use the <strong>How to cite</strong> tab for BibTeX, CITATION.cff, and a downloadable bundle.
       </p>
       <div class="hero-actions">
-        <a class="hero-link" href="{LAB_WEB}" target="_blank" rel="noopener noreferrer">Kumar Group website</a>
-        <span class="hero-dot">·</span>
         <a class="hero-link" href="{GITHUB_REPO}" target="_blank" rel="noopener noreferrer">GitHub repository</a>
       </div>
     </div>
@@ -839,8 +933,6 @@ _HERO_HTML = f"""
   </div>
 </div>
 """
-
-BIBTEX_FOR_UI = _read_text(CITATION_BIB)
 
 with gr.Blocks(**_BLOCKS_KW) as demo:
     gr.HTML(_HERO_HTML)
@@ -986,65 +1078,6 @@ with gr.Blocks(**_BLOCKS_KW) as demo:
                         batch_fig_zip,
                     ],
                 )
-
-            with gr.Tab("How to cite"):
-                gr.Markdown(
-                    f"""
-### Citation and attribution
-
-**{CITATION_INTRO}**
-
-{CITATION_LINE}
-
-*Repository:* [{GITHUB_REPO}]({GITHUB_REPO})
-
-This work is associated with the **[Kumar Research Group]({LAB_WEB})** (Organic/Medicinal Chemistry, **UNSW Sydney**).
-
-The repository root includes **`CITATION.cff`** (for GitHub&rsquo;s *Cite this repository* button) and **`CITATION.bib`** for LaTeX and reference managers.
-Below: **recommended citation** (plain text), **BibTeX** (copy or download), file downloads, and a **ZIP** bundle.
-"""
-                )
-                gr.Markdown(
-                    f'<div class="cite-panel"><strong>Recommended citation (plain text)</strong><br/><br/><code style="white-space:pre-wrap;font-size:0.92em;">{CITATION_FULL_TEXT.strip().replace(chr(10), "<br/>")}</code></div>'
-                )
-                gr.Markdown("**BibTeX** — copy from the code box or download `.bib`:")
-                gr.Code(
-                    value=BIBTEX_FOR_UI,
-                    language=None,
-                    label="BibTeX",
-                    lines=16,
-                    interactive=False,
-                )
-                gr.Markdown("**Downloads** (same files as on GitHub):")
-                with gr.Row():
-                    bib_file = gr.File(
-                        label="CITATION.bib",
-                        value=str(CITATION_BIB) if CITATION_BIB.is_file() else None,
-                        interactive=False,
-                    )
-                    cff_file = gr.File(
-                        label="CITATION.cff (GitHub)",
-                        value=str(CITATION_CFF) if CITATION_CFF.is_file() else None,
-                        interactive=False,
-                    )
-                zip_btn = gr.Button("Build citation ZIP (BibTeX + CFF + CITATION.txt)", variant="secondary")
-                zip_out = gr.File(label="Download citation bundle", interactive=False)
-
-                zip_btn.click(fn=_build_citation_zip, inputs=[], outputs=zip_out)
-
-    gr.HTML(
-        f"""
-<div class="foot">
-  <strong>Affiliation:</strong> Computational Drug Discovery, Kumar Research Group, School of Chemistry,
-  UNSW Sydney · <a href="{LAB_WEB}" target="_blank" rel="noopener noreferrer">nareshkumar.com.au</a>
-  · <a href="{GITHUB_REPO}" target="_blank" rel="noopener noreferrer">Source on GitHub</a>.
-</div>
-<div class="foot-cite">
-  <p class="foot-cite-intro">{html.escape(CITATION_INTRO)}</p>
-  <p class="foot-cite-body">{html.escape(CITATION_LINE)}</p>
-</div>
-"""
-    )
 
 
 def _on_hf_space() -> bool:

@@ -127,7 +127,7 @@ git commit -m "Stop tracking binaries for Hugging Face Space"
 **After a slim push, the Space still needs weights** so `app.py` can run:
 
 1. The repo tracks **`checkpoints/.gitkeep`** so `checkpoints/` exists after a push. In the Space: **Files and versions → Add file** and upload your `.pt` files into `checkpoints/` (e.g.  
-   `Half_Life_cnn_bilstm_embedding_physchem.pt` — whatever your default preset expects), **or**
+   `Half_Life_cnn_bilstm_embedding_physchem_run1.pt` — the default recommended preset), **or**
 2. Host weights on the **Model Hub** and extend the app to `hf_hub_download` on startup (custom work), **or**
 3. Use **Git LFS** / **Xet** as in [HF Xet docs](https://huggingface.co/docs/hub/xet) if you insist on Git-tracking binaries.
 

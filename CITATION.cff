@@ -11,7 +11,20 @@ title: >-
 version: 1.0.0
 date-released: "2026-04-09"
 authors:
-  - name: Ibisanmi TA, Bahatheg G, Mishra (Baishnab) SK, Willcox M, Kumar N
+  - family-names: Ibisanmi
+    given-names: Tope Abraham
+    affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
+  - family-names: Bahatheg
+    given-names: Ghayah
+    affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
+  - family-names: Mishra (Baishnab)
+    given-names: Shyam Kumar
+    affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
+  - family-names: Willcox
+    given-names: Mark
+    affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
+  - family-names: Kumar
+    given-names: Naresh
     affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
 url: https://github.com/Ibisanmi1/PepPhysChem-HL
 repository-code: https://github.com/Ibisanmi1/PepPhysChem-HL
