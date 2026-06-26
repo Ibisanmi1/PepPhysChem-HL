@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import contextlib
+import html
 import inspect
 import io
 import math
@@ -21,6 +22,34 @@ if str(PROJECT_ROOT) not in sys.path:
 
 GITHUB_REPO = "https://github.com/Ibisanmi1/PepPhysChem-HL"
 SOFTWARE_NAME = "PepPhysChem-HL"
+SOFTWARE_FULL_TITLE = (
+    "PepPhysChem-HL: An Integrated Command-Line and Web Platform for "
+    "Physicochemical Profiling and Deep Learning-Based Half-Life Prediction "
+    "of Therapeutic Peptides"
+)
+CITATION_BIB = PROJECT_ROOT / "CITATION.bib"
+CITATION_CFF = PROJECT_ROOT / "CITATION.cff"
+
+CITATION_INTRO = "If this pipeline contributes to your research, please cite:"
+CITATION_AUTHORS = (
+    "Tope Abraham Ibisanmi, Ghayah Bahatheg, Shyam Kumar Mishra (Baishnab), "
+    "Mark Willcox, and Naresh Kumar"
+)
+CITATION_LINE = (
+    f"{CITATION_AUTHORS} (2026). "
+    f"{SOFTWARE_FULL_TITLE}."
+)
+CITATION_FULL_TEXT = (
+    f"{CITATION_INTRO}\n\n{CITATION_LINE}\nAvailable from: {GITHUB_REPO}\n"
+)
+
+DEFAULT_HYBRID_CHECKPOINT_NAME = "Half_Life_cnn_bilstm_embedding_physchem_run1.pt"
+DEFAULT_HYBRID_TRAINING_CONFIG = (
+    PROJECT_ROOT
+    / "training_logs"
+    / "1_cnn_bilstm_hybrid_physchem_matrix"
+    / "training_config.json"
+)
 
 PRESET_RECOMMENDED = "__recommended__"
 PRESET_HYBRID_PHYSCHEM_MATRIX = "cnn_bilstm_hybrid_physchem_matrix"
@@ -162,6 +191,40 @@ def _run_comprehensive_figures(results_df: pd.DataFrame, prefix: str) -> Tuple[L
     )
 
 
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8")
+    except OSError:
+        return f"(File not found: {path.name})"
+
+
+def _build_citation_zip() -> str:
+    """Bundle BibTeX, CITATION.cff, and plain-text CITATION.txt (GitHub-style pack)."""
+    out_dir = PROJECT_ROOT / "output"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    zip_path = out_dir / "PepPhysChem-HL_citation.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        if CITATION_BIB.is_file():
+            zf.write(CITATION_BIB, arcname="CITATION.bib")
+        if CITATION_CFF.is_file():
+            zf.write(CITATION_CFF, arcname="CITATION.cff")
+        zf.writestr("CITATION.txt", CITATION_FULL_TEXT.strip() + "\n")
+    return str(zip_path)
+
+
+def _default_hybrid_checkpoint_path() -> Path:
+    return PROJECT_ROOT / "checkpoints" / DEFAULT_HYBRID_CHECKPOINT_NAME
+
+
+def _checkpoint_missing_message(exc: BaseException) -> str:
+    expected = _default_hybrid_checkpoint_path()
+    return (
+        f"### Model checkpoint not found\n\n{exc}\n\n"
+        f"Place **`{DEFAULT_HYBRID_CHECKPOINT_NAME}`** under `checkpoints/` "
+        f"(expected: `{expected}`) or set **`PEPPHYSCHEM_HL_MODEL_PATH`** to your `.pt` file."
+    )
+
+
 def _checkpoint_roots() -> List[Path]:
     import run_PepPhysChem_HL as runner
 
@@ -186,43 +249,43 @@ def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
     """
     Returns (model_path, training_config_path) for PepPhysChemHLPredictor.
     """
-    import run_PepPhysChem_HL as runner
-
     env_mp = (
         os.environ.get("PEPPHYSCHEM_HL_MODEL_PATH")
         or os.environ.get("AMP_MODEL_PATH")
         or ""
     ).strip() or None
-    default_cfg = (
-        PROJECT_ROOT
-        / "training_logs"
-        / "1_cnn_bilstm_hybrid_physchem_matrix"
-        / "training_config.json"
-    )
-    default_ck_names = list(runner.HYBRID_CHECKPOINT_BASENAMES)
+    expected_local = _default_hybrid_checkpoint_path()
 
     if preset_key == PRESET_RECOMMENDED:
         if env_mp:
             return env_mp, None
-        ck = _find_checkpoint(default_ck_names)
+        ck = _find_checkpoint([DEFAULT_HYBRID_CHECKPOINT_NAME])
         if ck is None:
             raise FileNotFoundError(
                 "Checkpoint for the recommended hybrid model not found. "
-                f"Expected `{runner.HYBRID_CHECKPOINT_BASENAMES[0]}` under "
-                "`checkpoints/` here or under PEPPHYSOCHEM_HL_AI_ROOT."
+                f"Expected `{expected_local}` "
+                "(or the same filename under PEPPHYSOCHEM_HL_AI_ROOT/checkpoints/)."
             )
-        tcp = str(default_cfg) if default_cfg.is_file() else None
+        tcp = (
+            str(DEFAULT_HYBRID_TRAINING_CONFIG)
+            if DEFAULT_HYBRID_TRAINING_CONFIG.is_file()
+            else None
+        )
         return str(ck), tcp
 
     if preset_key == PRESET_HYBRID_PHYSCHEM_MATRIX:
-        ck = _find_checkpoint(default_ck_names)
+        ck = _find_checkpoint([DEFAULT_HYBRID_CHECKPOINT_NAME])
         if ck is None:
             raise FileNotFoundError(
                 "Checkpoint for the hybrid physicochemical matrix benchmark not found. "
-                f"Expected `{runner.HYBRID_CHECKPOINT_BASENAMES[0]}` under "
-                "`checkpoints/` here or under PEPPHYSOCHEM_HL_AI_ROOT."
+                f"Expected `{expected_local}` "
+                "(or the same filename under PEPPHYSOCHEM_HL_AI_ROOT/checkpoints/)."
             )
-        tcp = str(default_cfg) if default_cfg.is_file() else None
+        tcp = (
+            str(DEFAULT_HYBRID_TRAINING_CONFIG)
+            if DEFAULT_HYBRID_TRAINING_CONFIG.is_file()
+            else None
+        )
         return str(ck), tcp
 
     raise ValueError(f"Unknown model preset: {preset_key}")
@@ -423,15 +486,29 @@ def predict_single(
             result = p.analyze_single(seq, include_physchem=include_physchem)
     except FileNotFoundError as e:
         return (
-            f"### Model checkpoint not found\n\n{e}\n\n"
-            "Place the required `.pt` under `checkpoints/` or set `PEPPHYSCHEM_HL_AI_ROOT` / "
-            "`PEPPHYSCHEM_HL_MODEL_PATH` (recommended preset only).",
+            _checkpoint_missing_message(e),
             pd.DataFrame(),
             None,
             "",
             [],
             None,
         )
+    except AttributeError as e:
+        if "DEFAULT_HYBRID_CHECKPOINT_NAME" in str(e) or "default_hybrid_checkpoint_path" in str(e):
+            return (
+                _checkpoint_missing_message(
+                    FileNotFoundError(
+                        f"Deploy `run_PepPhysChem_HL.py` is out of date ({e}). "
+                        f"Expected checkpoint: `{_default_hybrid_checkpoint_path()}`"
+                    )
+                ),
+                pd.DataFrame(),
+                None,
+                "",
+                [],
+                None,
+            )
+        return (f"### Error\n\n`{type(e).__name__}`: {e}", pd.DataFrame(), None, "", [], None)
     except Exception as e:
         return (f"### Error\n\n`{type(e).__name__}`: {e}", pd.DataFrame(), None, "", [], None)
 
@@ -489,13 +566,29 @@ def predict_batch(
     except FileNotFoundError as e:
         return (
             pd.DataFrame(),
-            f"### Model checkpoint not found\n\n{e}",
+            _checkpoint_missing_message(e),
             None,
             None,
             "",
             [],
             None,
         )
+    except AttributeError as e:
+        if "DEFAULT_HYBRID_CHECKPOINT_NAME" in str(e) or "default_hybrid_checkpoint_path" in str(e):
+            return (
+                pd.DataFrame(),
+                _checkpoint_missing_message(
+                    FileNotFoundError(
+                        f"Deploy `run_PepPhysChem_HL.py` is out of date ({e}). "
+                        f"Expected checkpoint: `{_default_hybrid_checkpoint_path()}`"
+                    )
+                ),
+                None,
+                None,
+                "",
+                [],
+                None,
+            )
     except Exception as e:
         return (
             pd.DataFrame(),
@@ -919,6 +1012,7 @@ _HERO_HTML = f"""
         An integrated command-line and web platform for <strong>physicochemical profiling</strong> and
         <strong>deep learning-based half-life prediction</strong> of therapeutic peptides. The workbench supports
         single-sequence and batch prediction, optional profiling, and publication-quality figures.
+        Use the <strong>How to cite</strong> tab for BibTeX, CITATION.cff, and a downloadable bundle.
       </p>
       <div class="hero-actions">
         <a class="hero-link" href="{GITHUB_REPO}" target="_blank" rel="noopener noreferrer">GitHub repository</a>
@@ -933,6 +1027,8 @@ _HERO_HTML = f"""
   </div>
 </div>
 """
+
+BIBTEX_FOR_UI = _read_text(CITATION_BIB)
 
 with gr.Blocks(**_BLOCKS_KW) as demo:
     gr.HTML(_HERO_HTML)
@@ -1078,6 +1174,45 @@ with gr.Blocks(**_BLOCKS_KW) as demo:
                         batch_fig_zip,
                     ],
                 )
+
+            with gr.Tab("How to cite"):
+                gr.Markdown(
+                    f'<div class="cite-panel"><strong>Plain text</strong><br/><br/>'
+                    f'<code class="cite-panel-code">{html.escape(CITATION_LINE)}</code></div>'
+                )
+                gr.Markdown("**BibTeX** — copy from the code box or download `.bib`:")
+                gr.Code(
+                    value=BIBTEX_FOR_UI,
+                    language=None,
+                    label="BibTeX",
+                    lines=16,
+                    interactive=False,
+                )
+                gr.Markdown("**Downloads** (same files as on GitHub):")
+                with gr.Row():
+                    bib_file = gr.File(
+                        label="CITATION.bib",
+                        value=str(CITATION_BIB) if CITATION_BIB.is_file() else None,
+                        interactive=False,
+                    )
+                    cff_file = gr.File(
+                        label="CITATION.cff (GitHub)",
+                        value=str(CITATION_CFF) if CITATION_CFF.is_file() else None,
+                        interactive=False,
+                    )
+                zip_btn = gr.Button("Build citation ZIP (BibTeX + CFF + CITATION.txt)", variant="secondary")
+                zip_out = gr.File(label="Download citation bundle", interactive=False)
+
+                zip_btn.click(fn=_build_citation_zip, inputs=[], outputs=zip_out)
+
+    gr.HTML(
+        f"""
+<div class="foot-cite">
+  <p class="foot-cite-intro">{html.escape(CITATION_INTRO)}</p>
+  <p class="foot-cite-body">{html.escape(CITATION_LINE)}</p>
+</div>
+"""
+    )
 
 
 def _on_hf_space() -> bool:

@@ -90,14 +90,17 @@ def _default_results_output_dir() -> Path:
     return out
 
 
-HYBRID_CHECKPOINT_BASENAMES = (
-    "Half_Life_cnn_bilstm_embedding_physchem_run1.pt",
-    "Half_Life_cnn_bilstm_embedding_physchem.pt",
-    "Half_Life_cnn_bilstm_physchem_embedding.pt",
-)
+DEFAULT_HYBRID_CHECKPOINT_NAME = "Half_Life_cnn_bilstm_embedding_physchem_run1.pt"
+HYBRID_CHECKPOINT_BASENAMES = (DEFAULT_HYBRID_CHECKPOINT_NAME,)
 DEFAULT_HYBRID_TRAINING_CONFIG = (
     project_root / "training_logs" / "1_cnn_bilstm_hybrid_physchem_matrix" / "training_config.json"
 )
+
+
+def default_hybrid_checkpoint_path(root: Optional[Path] = None) -> Path:
+    """Absolute path to the recommended hybrid weights under <root>/checkpoints/."""
+    base = root if root is not None else project_root
+    return base / "checkpoints" / DEFAULT_HYBRID_CHECKPOINT_NAME
 
 
 def _resolve_default_hybrid_checkpoint() -> Path:
@@ -872,7 +875,7 @@ class PepPhysChemHLPredictor:
         if not model_path.exists():
             raise FileNotFoundError(
                 f"Hybrid CNN–BiLSTM checkpoint not found: {model_path}\n"
-                f"  Expected the default best hybrid ({HYBRID_CHECKPOINT_BASENAMES[0]}) under "
+                f"  Expected `checkpoints/{DEFAULT_HYBRID_CHECKPOINT_NAME}` under "
                 f"{project_root / 'checkpoints'} or {PEPPHYSOCHEM_HL_AI_ROOT / 'checkpoints'}.\n"
                 f"  Override with --model_path or set PEPPHYSOCHEM_HL_AI_ROOT to your training-repo tree."
             )
