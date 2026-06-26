@@ -5,24 +5,24 @@ message: >-
   If this pipeline contributes to your research, please cite the software using
   the metadata below.
 title: >-
-  AMP_PhysioChem_Predictor: Comprehensive computational software for the
-  prediction of physicochemical properties and antimicrobial peptide stability
+  PepPhysChem-HL: An Integrated Command-Line and Web Platform for
+  Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of
+  Therapeutic Peptides
 version: 1.0.0
 date-released: "2026-04-09"
 authors:
   - name: Ibisanmi TA, Bahatheg G, Mishra (Baishnab) SK, Willcox M, Kumar N
     affiliation: Kumar Research Group, School of Chemistry, UNSW Sydney, Australia
-url: https://github.com/Ibisanmi1/AMP_PhysioChem_Predictor
-repository-code: https://github.com/Ibisanmi1/AMP_PhysioChem_Predictor
+url: https://github.com/Ibisanmi1/PepPhysChem-HL
+repository-code: https://github.com/Ibisanmi1/PepPhysChem-HL
 license: Apache-2.0
 keywords:
-  - antimicrobial peptides
+  - therapeutic peptides
   - half-life prediction
   - deep learning
   - physicochemical properties
   - computational drug discovery
 abstract: >-
-  A comprehensive tool for predicting peptide half-life and analyzing
-  physicochemical properties of antimicrobial peptides (AMPs) using deep learning
-  and established biochemical methods. Associated with the Kumar Research Group
-  (UNSW Sydney).
+  An integrated command-line and web platform for physicochemical profiling and
+  deep learning-based half-life prediction of therapeutic peptides. Associated
+  with the Kumar Research Group (UNSW Sydney).

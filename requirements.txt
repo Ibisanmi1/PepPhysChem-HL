@@ -25,7 +25,7 @@ pyyaml>=5.4.0
 # Gradio UI / Hugging Face Spaces
 gradio>=4.44.0,<7
 
-# Used by run_AMP_PhysioChem_Predictor (distributions, correlations)
+# Used by run_PepPhysChem_HL (distributions, correlations)
 scipy>=1.7.0
 
 # TensorBoard for training visualization

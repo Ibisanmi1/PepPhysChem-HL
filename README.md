@@ -1,19 +1,21 @@
 
-# AMP_PhysioChem
+# PepPhysChem-HL
 
-A comprehensive computational platform that integrates established biochemical analysis methods with advanced deep-learning models for therapeutics peptide characterization
+**PepPhysChem-HL: An Integrated Command-Line and Web Platform for Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of Therapeutic Peptides**
+
+A comprehensive computational platform that integrates established biochemical analysis methods with advanced deep-learning models for therapeutic peptide characterization.
 
 It is intended for research and education (e.g. open demos and reproducible workflows). Predictions are computational estimates, not clinical or regulatory advice.
 
-**Hugging Face Space:** [Ibisanmi1/AMP_PhysioChemical_Predictor](https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor). 
+**Hugging Face Space:** [Ibisanmi1/PepPhysChem-HL](https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL). 
 
 ### Step 1: Clone or Navigate to Project Directory
 
-git clone https://github.com/Ibisanmi1/AMP_PhysioChem_Predictor.git
+git clone https://github.com/Ibisanmi1/PepPhysChem-HL.git
 
 
 ```bash
-cd /path/to/AMP_PhysioChem_Predictor
+cd /path/to/PepPhysChem-HL
 ```
 
 ### Step 2: Install Dependencies
@@ -34,7 +36,7 @@ Usage
 #### Example 1: Single Sequence Analysis
 
 ```bash
-python run_AMP_PhysioChem_Predictor.py \
+python run_PepPhysChem_HL.py \
     --sequence "KWKLFKKIGAVLKVL" \
     --output "single_result.csv"
 ```
@@ -45,7 +47,7 @@ python run_AMP_PhysioChem_Predictor.py \
 Analyze multiple sequences from a CSV file:
 
 ```bash
-python run_AMP_PhysioChem_Predictor.py \
+python run_PepPhysChem_HL.py \
     --input "example_peptides.csv" \
     --output "batch_results.csv"
 ```
@@ -53,7 +55,7 @@ python run_AMP_PhysioChem_Predictor.py \
 **Note**: The default column name for sequences is `sequence`. If your CSV uses a different column name, specify it with `--sequence_col`:
 
 ```bash
-python run_AMP_PhysioChem_Predictor.py \
+python run_PepPhysChem_HL.py \
     --input "my_data.csv" \
     --sequence_col "peptide_sequence" \
     --output "batch_results.csv"
@@ -70,7 +72,7 @@ python run_AMP_PhysioChem_Predictor.py \
 #### Example 3: if you like to use other Checkpoint
 
 ```bash
-python run_AMP_PhysioChem_Predictor.py \
+python run_PepPhysChem_HL.py \
     --model_path "checkpoints/Half_Life_cnn_bilstm_embedding_2.pt" \
     --sequence "KWKLFKKIGAVLKVL" \
     --output "single_result_model2.csv"
@@ -80,7 +82,7 @@ python run_AMP_PhysioChem_Predictor.py \
 #### Example 5: Force CPU Usage
 
 ```bash
-python run_AMP_PhysioChem_Predictor.py \
+python run_PepPhysChem_HL.py \
     --input "peptides.csv" \
     --device cpu \
     --output "results.csv"
@@ -126,8 +128,8 @@ ACDEFGHIKLMNPQRSTVWY
 ## Directory Structure
 
 ```
-AMP_PhysioChem_Predictor/
-├── run_AMP_PhysioChem_Predictor.py    # Main entry point
+PepPhysChem-HL/
+├── run_PepPhysChem_HL.py          # Main entry point
 ├── run_analysis.sh             # Helper shell script
 ├── requirements.txt           # Python dependencies
 ├── checkpoints/                # Trained model files
@@ -145,4 +147,4 @@ AMP_PhysioChem_Predictor/
 
 If this pipeline contributes to your research, please cite:
 
-Ibisanmi TA, Bahatheg G,Mishra (Baishnab) SK,  Willcox M, Kumar N (2026). AMP_PhysioChem_Predictor: Comprehensive computational software for the prediction of physicochemical properties and antimicrobial peptide stability.....
+Ibisanmi TA, Bahatheg G, Mishra (Baishnab) SK, Willcox M, Kumar N (2026). PepPhysChem-HL: An Integrated Command-Line and Web Platform for Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of Therapeutic Peptides.

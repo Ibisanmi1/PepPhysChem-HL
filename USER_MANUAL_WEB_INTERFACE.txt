@@ -1,6 +1,6 @@
-AMP PhysioChem Predictor — Web interface (brief user guide)
+PepPhysChem-HL — Web interface (brief user guide)
 
-The web application is a Gradio workbench for antimicrobial peptide sequences. It offers half-life estimation with optional physicochemical profiling and optional publication-quality figures. Open it in a normal browser; hosted copies require network access.
+The web application is a Gradio workbench for therapeutic peptide sequences. It offers half-life estimation with optional physicochemical profiling and optional publication-quality figures. Open it in a normal browser; hosted copies require network access.
 
 Choose the half-life prediction model from the menu above the tabs. The recommended hybrid preset is the default for routine analyses unless your deployment documentation specifies another checkpoint.
 
@@ -10,5 +10,5 @@ On Batch (paste), put one sequence per line. Empty lines are skipped and lines b
 
 Use the How to cite tab for plain text, BibTeX, individual files, or a citation ZIP so published work acknowledges the software and the Kumar Research Group at UNSW Sydney. Model weights must be present on the server; predictions are computational aids and do not replace laboratory measurement.
 
-Repository: https://github.com/Ibisanmi1/AMP_PhysioChem_Predictor
+Repository: https://github.com/Ibisanmi1/PepPhysChem-HL
 Group: https://nareshkumar.com.au

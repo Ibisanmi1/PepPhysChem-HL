@@ -24,7 +24,7 @@ fi
 
 CURRENT="$(git rev-parse --abbrev-ref HEAD)"
 REMOTE_NAME="${HF_REMOTE_NAME:-hf}"
-SPACE_GIT_URL="https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor"
+SPACE_GIT_URL="https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL"
 
 if ! git remote get-url "${REMOTE_NAME}" &>/dev/null; then
   git remote add "${REMOTE_NAME}" "${SPACE_GIT_URL}"
@@ -77,5 +77,5 @@ if [[ "${push_status}" -ne 0 ]]; then
 fi
 
 echo ""
-echo "Done. Space: https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor"
+echo "Done. Space: https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL"
 echo "Local branch '${CURRENT}' unchanged. Add weights under Space → Files → checkpoints/ if needed."

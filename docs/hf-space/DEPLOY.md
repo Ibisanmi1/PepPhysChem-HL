@@ -1,6 +1,6 @@
 # Hugging Face Space — deploy and push
 
-**Space:** [Ibisanmi1/AMP_PhysioChemical_Predictor](https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor)  
+**Space:** [Ibisanmi1/PepPhysChem-HL](https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL)  
 **App entry:** `app.py` (declared in `README.md` YAML frontmatter). The Hub rejects pushes if **`short_description` is longer than 60 characters** (keep the Space card line short; put detail in the README body).
 
 ---
@@ -23,7 +23,7 @@ Create a token with **write** access to Spaces:
 **Option A — script (recommended)**
 
 ```bash
-cd /path/to/AMP_PhysioChem_Predictor
+cd /path/to/PepPhysChem-HL
 chmod +x scripts/hf_set_token.sh scripts/hf_push_space.sh
 export HF_TOKEN=hf_your_token_here
 ./scripts/hf_set_token.sh
@@ -52,13 +52,13 @@ Many tools read `HF_TOKEN` automatically; Git still needs either `--add-to-git-c
 When Git asks for a **password**, use the **token** (not your Hugging Face account password):
 
 ```bash
-git clone https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor
+git clone https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL
 ```
 
 Or download files without Git:
 
 ```bash
-hf download Ibisanmi1/AMP_PhysioChemical_Predictor --repo-type=space
+hf download Ibisanmi1/PepPhysChem-HL --repo-type=space
 ```
 
 ---
@@ -68,7 +68,7 @@ hf download Ibisanmi1/AMP_PhysioChemical_Predictor --repo-type=space
 From your **development clone** (this GitHub repo), add the Space as a second remote and push:
 
 ```bash
-cd /path/to/AMP_PhysioChem_Predictor
+cd /path/to/PepPhysChem-HL
 ./scripts/hf_push_space.sh
 ```
 

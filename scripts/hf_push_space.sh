@@ -10,14 +10,14 @@
 # or overwrite the Space branch (only if you accept losing remote-only commits):
 #   HF_PUSH_FORCE=1 ./scripts/hf_push_space.sh
 #
-# Space: https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor
+# Space: https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${ROOT}"
 
-SPACE_GIT_URL="https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor"
+SPACE_GIT_URL="https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL"
 LOCAL_BRANCH="${1:-$(git rev-parse --abbrev-ref HEAD)}"
 REMOTE_NAME="${HF_REMOTE_NAME:-hf}"
 
@@ -65,4 +65,4 @@ if ! _push; then
   exit 1
 fi
 
-echo "Done. Space will rebuild: https://huggingface.co/spaces/Ibisanmi1/AMP_PhysioChemical_Predictor"
+echo "Done. Space will rebuild: https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL"

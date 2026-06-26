@@ -69,7 +69,7 @@ Thumbs.db
 .env.*
 !.env.example
 
-# --- AMP_PhysioChem_Predictor ---
+# --- PepPhysChem-HL ---
 # Keep tracked: source, app.py, CITATION.*, README, requirements, small data/*.csv as needed.
 # Hugging Face Spaces reject large binaries in plain Git — use Hub, Space "Files", or Git LFS/Xet.
 
@@ -90,7 +90,7 @@ training_logs/
 # Best-parameter JSON dumps (local tuning / search — not required for inference UI)
 best_parameters/
 
-# Training / ablation / plotting (not required for app.py or run_AMP_PhysioChem_Predictor.py)
+# Training / ablation / plotting (not required for app.py or run_PepPhysChem_HL.py)
 scripts/hybrid_physchem_matrix_utils.py
 scripts/plot_learning_curves_individual.py
 scripts/plot_top3_model_predictions.py

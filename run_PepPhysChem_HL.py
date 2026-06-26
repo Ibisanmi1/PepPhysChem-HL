@@ -61,12 +61,26 @@ sns.set_palette("deep")
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-_amp_raw = (os.environ.get("AMP_PHYSIOCHEM_AI_ROOT") or "").strip()
-_amp_candidate = Path(_amp_raw).expanduser() if _amp_raw else None
-if _amp_candidate is not None and _amp_candidate.is_dir():
-    AMP_PHYSIOCHEM_AI_ROOT = _amp_candidate
+SOFTWARE_NAME = "PepPhysChem-HL"
+SOFTWARE_FULL_TITLE = (
+    "PepPhysChem-HL: An Integrated Command-Line and Web Platform for "
+    "Physicochemical Profiling and Deep Learning-Based Half-Life Prediction "
+    "of Therapeutic Peptides"
+)
+
+_ai_root_raw = (
+    os.environ.get("PEPPHYSCHEM_HL_AI_ROOT")
+    or os.environ.get("AMP_PHYSIOCHEM_AI_ROOT")
+    or ""
+).strip()
+_ai_root_candidate = Path(_ai_root_raw).expanduser() if _ai_root_raw else None
+if _ai_root_candidate is not None and _ai_root_candidate.is_dir():
+    PEPPHYSOCHEM_HL_AI_ROOT = _ai_root_candidate
 else:
-    AMP_PHYSIOCHEM_AI_ROOT = project_root.parent.parent / "AMP_PhysioChem_AI"
+    PEPPHYSOCHEM_HL_AI_ROOT = project_root.parent.parent / "AMP_PhysioChem_AI"
+
+# Backward-compatible alias for existing deployments and documentation.
+AMP_PHYSIOCHEM_AI_ROOT = PEPPHYSOCHEM_HL_AI_ROOT
 
 
 def _default_results_output_dir() -> Path:
@@ -84,13 +98,12 @@ HYBRID_CHECKPOINT_BASENAMES = (
 
 def _resolve_default_hybrid_checkpoint() -> Path:
     """
-    Best hybrid weights: same resolution order as AMP_PhysioChem_AI (local checkpoints
-    first), then AMP_PHYSIOCHEM_AI_ROOT/checkpoints so a slim Predictor clone can use
-    the sibling training repo.
+    Best hybrid weights: local checkpoints first, then PEPPHYSOCHEM_HL_AI_ROOT/checkpoints
+    so a slim PepPhysChem-HL clone can use the sibling training repo.
     """
     search_roots = [project_root]
-    if AMP_PHYSIOCHEM_AI_ROOT.is_dir() and AMP_PHYSIOCHEM_AI_ROOT.resolve() != project_root.resolve():
-        search_roots.append(AMP_PHYSIOCHEM_AI_ROOT)
+    if PEPPHYSOCHEM_HL_AI_ROOT.is_dir() and PEPPHYSOCHEM_HL_AI_ROOT.resolve() != project_root.resolve():
+        search_roots.append(PEPPHYSOCHEM_HL_AI_ROOT)
     for root in search_roots:
         ck = root / "checkpoints"
         for name in HYBRID_CHECKPOINT_BASENAMES:
@@ -797,12 +810,12 @@ class ComprehensiveAnalysis:
         print(f"   ✓ Saved: {prefix}_analysis_report.txt")
 
 
-class AMPPhysioChemPredictor:
+class PepPhysChemHLPredictor:
     """
-    Comprehensive peptide analysis pipeline combining:
+    PepPhysChem-HL analysis pipeline combining:
     - Half-life prediction using the default hybrid CNN–BiLSTM + physicochemical model
-      (cnn_bilstm_physchem; same checkpoint defaults as AMP_PhysioChem_AI)
-    - Comprehensive physicochemical property analysis
+      (cnn_bilstm_physchem)
+    - Comprehensive physicochemical property analysis for therapeutic peptides
     """
 
     def __init__(
@@ -852,8 +865,8 @@ class AMPPhysioChemPredictor:
             raise FileNotFoundError(
                 f"Hybrid CNN–BiLSTM checkpoint not found: {model_path}\n"
                 f"  Expected the default best hybrid ({HYBRID_CHECKPOINT_BASENAMES[0]}) under "
-                f"{project_root / 'checkpoints'} or {AMP_PHYSIOCHEM_AI_ROOT / 'checkpoints'}.\n"
-                f"  Override with --model_path or set AMP_PHYSIOCHEM_AI_ROOT to your AMP_PhysioChem_AI tree."
+                f"{project_root / 'checkpoints'} or {PEPPHYSOCHEM_HL_AI_ROOT / 'checkpoints'}.\n"
+                f"  Override with --model_path or set PEPPHYSOCHEM_HL_AI_ROOT to your training-repo tree."
             )
 
         print(f"📦 Loading model from: {model_path}")
@@ -1327,13 +1340,13 @@ class AMPPhysioChemPredictor:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='AMP PhysioChem Predictor — peptide half-life and physicochemical analysis',
+        description=f'{SOFTWARE_NAME} — peptide half-life and physicochemical analysis',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_AMP_PhysioChem_Predictor.py --sequence "KWKLFKKIGAVLKVL"
-  python run_AMP_PhysioChem_Predictor.py --input peptides.csv --output results.csv
-  python run_AMP_PhysioChem_Predictor.py --model_path checkpoints/custom_model.pt --sequence "ACDEFGHIK"
+  python run_PepPhysChem_HL.py --sequence "KWKLFKKIGAVLKVL"
+  python run_PepPhysChem_HL.py --input peptides.csv --output results.csv
+  python run_PepPhysChem_HL.py --model_path checkpoints/custom_model.pt --sequence "ACDEFGHIK"
         """
     )
 
@@ -1353,8 +1366,8 @@ Examples:
         default=None,
         help=(
             'Path to .pt checkpoint (default: best hybrid CNN–BiLSTM+physchem, same as '
-            'AMP_PhysioChem_AI: Half_Life_cnn_bilstm_embedding_physchem.pt under ./checkpoints '
-            'or AMP_PHYSIOCHEM_AI_ROOT/checkpoints)'
+            'Half_Life_cnn_bilstm_embedding_physchem.pt under ./checkpoints '
+            'or PEPPHYSOCHEM_HL_AI_ROOT/checkpoints)'
         ),
     )
     parser.add_argument(
@@ -1385,7 +1398,7 @@ Examples:
 
     try:
 
-        pipeline = AMPPhysioChemPredictor(
+        pipeline = PepPhysChemHLPredictor(
             model_path=args.model_path,
             device=args.device,
             training_config_path=args.training_config,
@@ -1444,6 +1457,10 @@ Examples:
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+# Backward-compatible alias for scripts and deployments using the old class name.
+AMPPhysioChemPredictor = PepPhysChemHLPredictor
 
 
 if __name__ == "__main__":

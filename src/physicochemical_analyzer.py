@@ -10,7 +10,7 @@ from collections import Counter
 
 class PhysicochemicalAnalyzer:
     """
-    Advanced physicochemical analyzer for antimicrobial peptides.
+    Advanced physicochemical analyzer for therapeutic peptides.
     Calculates comprehensive physicochemical properties using validated scales and methods.
     """
 

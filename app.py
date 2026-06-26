@@ -21,7 +21,13 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 LAB_WEB = "https://nareshkumar.com.au"
-GITHUB_REPO = "https://github.com/Ibisanmi1/AMP_PhysioChem_Predictor"
+GITHUB_REPO = "https://github.com/Ibisanmi1/PepPhysChem-HL"
+SOFTWARE_NAME = "PepPhysChem-HL"
+SOFTWARE_FULL_TITLE = (
+    "PepPhysChem-HL: An Integrated Command-Line and Web Platform for "
+    "Physicochemical Profiling and Deep Learning-Based Half-Life Prediction "
+    "of Therapeutic Peptides"
+)
 CITATION_BIB = PROJECT_ROOT / "CITATION.bib"
 CITATION_CFF = PROJECT_ROOT / "CITATION.cff"
 
@@ -29,8 +35,7 @@ CITATION_INTRO = "If this pipeline contributes to your research, please cite:"
 CITATION_LINE = (
     "Ibisanmi TA, .........., ............., ................, ............, ............... "
     "Willcox M, Kumar N (2026). "
-    "AMP_PhysioChem_Predictor: Comprehensive computational software for the prediction "
-    "of physicochemical properties and antimicrobial peptide stability."
+    f"{SOFTWARE_FULL_TITLE}."
 )
 CITATION_FULL_TEXT = (
     f"{CITATION_INTRO}\n\n{CITATION_LINE}\nAvailable from: {GITHUB_REPO}\n"
@@ -72,7 +77,11 @@ _FIGURE_CAPTIONS: Dict[str, str] = {
     "_structural_analysis.png": "Structural descriptors vs half-life",
 }
 
-_DEFAULT_WEB_SAVE_DPI = int(os.environ.get("AMP_WEB_FIGURE_DPI", "420"))
+_DEFAULT_WEB_SAVE_DPI = int(
+    os.environ.get("PEPPHYSCHEM_HL_WEB_FIGURE_DPI")
+    or os.environ.get("AMP_WEB_FIGURE_DPI")
+    or "420"
+)
 
 
 @contextlib.contextmanager
@@ -145,7 +154,7 @@ def _collect_gradio_figures(out_dir: Path, prefix: str) -> List[str]:
 
 def _run_comprehensive_figures(results_df: pd.DataFrame, prefix: str) -> Tuple[List[str], str]:
     """Run publication-style analysis; return absolute paths to PNGs and a short markdown note."""
-    import run_AMP_PhysioChem_Predictor as runner
+    import run_PepPhysChem_HL as runner
 
     out_dir = _gradio_figure_dir()
     clean_df = _prepare_results_for_analysis(results_df)
@@ -183,7 +192,7 @@ def _build_citation_zip() -> str:
     """Bundle BibTeX, CITATION.cff, and plain-text CITATION.txt (GitHub-style pack)."""
     out_dir = PROJECT_ROOT / "output"
     out_dir.mkdir(parents=True, exist_ok=True)
-    zip_path = out_dir / "AMP_PhysioChem_Predictor_citation.zip"
+    zip_path = out_dir / "PepPhysChem-HL_citation.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         if CITATION_BIB.is_file():
             zf.write(CITATION_BIB, arcname="CITATION.bib")
@@ -194,10 +203,10 @@ def _build_citation_zip() -> str:
 
 
 def _checkpoint_roots() -> List[Path]:
-    import run_AMP_PhysioChem_Predictor as runner
+    import run_PepPhysChem_HL as runner
 
     roots = [PROJECT_ROOT]
-    ai = runner.AMP_PHYSIOCHEM_AI_ROOT
+    ai = runner.PEPPHYSOCHEM_HL_AI_ROOT
     if ai.is_dir() and ai.resolve() != PROJECT_ROOT.resolve():
         roots.append(ai)
     return roots
@@ -215,10 +224,14 @@ def _find_checkpoint(basenames: List[str]) -> Optional[Path]:
 
 def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
     """
-    Returns (model_path, training_config_path) for AMPPhysioChemPredictor.
+    Returns (model_path, training_config_path) for PepPhysChemHLPredictor.
     None, None → repository default hybrid resolution.
     """
-    env_mp = (os.environ.get("AMP_MODEL_PATH") or "").strip() or None
+    env_mp = (
+        os.environ.get("PEPPHYSCHEM_HL_MODEL_PATH")
+        or os.environ.get("AMP_MODEL_PATH")
+        or ""
+    ).strip() or None
 
     if preset_key == PRESET_RECOMMENDED:
         return env_mp, None
@@ -240,7 +253,7 @@ def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
             raise FileNotFoundError(
                 "Checkpoint for the hybrid physicochemical matrix benchmark not found. "
                 "Expected `Half_Life_cnn_bilstm_embedding_physchem.pt` (or `_run1`) under "
-                "`checkpoints/` here or under AMP_PHYSIOCHEM_AI_ROOT."
+                "`checkpoints/` here or under PEPPHYSOCHEM_HL_AI_ROOT."
             )
         tcp = str(cfg) if cfg.is_file() else None
         return str(ck), tcp
@@ -250,13 +263,17 @@ def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
 
 def _get_predictor(preset_key: str) -> Any:
     if preset_key not in _predictor_cache:
-        import run_AMP_PhysioChem_Predictor as runner
+        import run_PepPhysChem_HL as runner
 
         mp, tcp = _resolve_preset(preset_key)
         with contextlib.redirect_stdout(io.StringIO()):
-            _predictor_cache[preset_key] = runner.AMPPhysioChemPredictor(
+            _predictor_cache[preset_key] = runner.PepPhysChemHLPredictor(
                 model_path=mp,
-                device=os.environ.get("AMP_DEVICE") or None,
+                device=(
+                    os.environ.get("PEPPHYSCHEM_HL_DEVICE")
+                    or os.environ.get("AMP_DEVICE")
+                    or None
+                ),
                 training_config_path=tcp,
             )
     return _predictor_cache[preset_key]
@@ -302,7 +319,7 @@ def _aa_composition_chart_png(
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    import run_AMP_PhysioChem_Predictor as runner
+    import run_PepPhysChem_HL as runner
 
     primary = runner.CHART_PRIMARY
     edge = runner.CHART_EDGE
@@ -440,8 +457,8 @@ def predict_single(
     except FileNotFoundError as e:
         return (
             f"### Model checkpoint not found\n\n{e}\n\n"
-            "Place the required `.pt` under `checkpoints/` or set `AMP_PHYSIOCHEM_AI_ROOT` / "
-            "`AMP_MODEL_PATH` (recommended preset only).",
+            "Place the required `.pt` under `checkpoints/` or set `PEPPHYSCHEM_HL_AI_ROOT` / "
+            "`PEPPHYSCHEM_HL_MODEL_PATH` (recommended preset only).",
             pd.DataFrame(),
             None,
             "",
@@ -787,7 +804,7 @@ except Exception:
     )
 
 _GRADIO_MAJOR = int(gr.__version__.split(".", maxsplit=1)[0])
-_BLOCKS_KW: dict = {"title": "AMP PhysioChem Predictor · Kumar Group (UNSW)"}
+_BLOCKS_KW: dict = {"title": f"{SOFTWARE_NAME} · Kumar Group (UNSW)"}
 _LAUNCH_THEME_KW: dict = {}
 if _GRADIO_MAJOR >= 6:
     _LAUNCH_THEME_KW = {"theme": APP_THEME, "css": CUSTOM_CSS}
@@ -800,11 +817,10 @@ _HERO_HTML = f"""
   <div class="hero-inner">
     <div class="hero-main">
       <p class="hero-kicker">Kumar Research Group · Computational drug discovery · UNSW Sydney</p>
-      <h1>AMP PhysioChem Predictor</h1>
+      <h1>{SOFTWARE_NAME}</h1>
       <p class="sub">
-        A comprehensive tool for predicting peptide <strong>half-life</strong> and analyzing
-        <strong>physicochemical properties</strong> of antimicrobial peptides (AMPs) using
-        <strong>deep learning</strong> and established biochemical methods. The workbench supports
+        An integrated command-line and web platform for <strong>physicochemical profiling</strong> and
+        <strong>deep learning-based half-life prediction</strong> of therapeutic peptides. The workbench supports
         single-sequence and batch prediction, optional profiling, and publication-quality figures.
         Use the <strong>How to cite</strong> tab for BibTeX, CITATION.cff, and a downloadable bundle.
       </p>
