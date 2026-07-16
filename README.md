@@ -8,14 +8,7 @@ It is intended for research and education (e.g. open demos and reproducible work
 
 **Hugging Face Space:** [Ibisanmi1/PepPhysChem-HL](https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL).
 
-### Web interface (Gradio / Hugging Face)
 
-Launch locally with `python app.py`, or use the Space above. The UI exposes **two** half-life models:
-
-| Dropdown option | Checkpoint | Training config |
-| --- | --- | --- |
-| **CNN–BiLSTM + physchem (emb.) — default** | `checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt` | `training_logs/1_cnn_bilstm_hybrid_physchem_matrix/training_config.json` |
-| **CNN + physchem (emb.)** | `checkpoints/Half_Life_cnn_embedding_physchem_run1.pt` | `training_logs/1_cnn_embedding_hybrid_physchem_matrix/training_config.json` |
 
 ### Step 1: Clone or Navigate to Project Directory
 
