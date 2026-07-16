@@ -50,18 +50,28 @@ DEFAULT_HYBRID_TRAINING_CONFIG = (
     / "1_cnn_bilstm_hybrid_physchem_matrix"
     / "training_config.json"
 )
+DEFAULT_CNN_PHYSCHEM_CHECKPOINT_NAME = "Half_Life_cnn_embedding_physchem_run1.pt"
+DEFAULT_CNN_PHYSCHEM_TRAINING_CONFIG = (
+    PROJECT_ROOT
+    / "training_logs"
+    / "1_cnn_embedding_hybrid_physchem_matrix"
+    / "training_config.json"
+)
 
-PRESET_RECOMMENDED = "__recommended__"
-PRESET_HYBRID_PHYSCHEM_MATRIX = "cnn_bilstm_hybrid_physchem_matrix"
+# Default: CNN–BiLSTM + physchem (embedding), same weights as before.
+PRESET_CNN_BILSTM_PHYSCHEM = "cnn_bilstm_hybrid_physchem"
+PRESET_CNN_PHYSCHEM = "cnn_embedding_hybrid_physchem"
+# Back-compat alias used by older UI / env wiring.
+PRESET_RECOMMENDED = PRESET_CNN_BILSTM_PHYSCHEM
 
 MODEL_PRESETS: List[Tuple[str, str]] = [
     (
-        "Recommended — hybrid CNN–BiLSTM + physicochemical (default weights)",
-        PRESET_RECOMMENDED,
+        "CNN–BiLSTM + physchem (emb.) — default",
+        PRESET_CNN_BILSTM_PHYSCHEM,
     ),
     (
-        "CNN–BiLSTM — hybrid physicochemical matrix (benchmark training)",
-        PRESET_HYBRID_PHYSCHEM_MATRIX,
+        "CNN + physchem (emb.)",
+        PRESET_CNN_PHYSCHEM,
     ),
 ]
 PRESET_DROPDOWN_LABELS = [pair[0] for pair in MODEL_PRESETS]
@@ -225,6 +235,18 @@ def _checkpoint_missing_message(exc: BaseException) -> str:
     )
 
 
+def _checkpoint_load_error_message(exc: BaseException) -> str:
+    hint = ""
+    if "invalid load key" in str(exc).lower() and "'v'" in str(exc):
+        hint = (
+            "\n\nThis usually means the Space checked out a **Git LFS pointer** "
+            "instead of the real `.pt` file. Redeploy with the latest `app.py` "
+            "(which downloads weights via the Hub), or upload the checkpoint via "
+            "**Files → Add file** on the Space."
+        )
+    return f"### Model checkpoint could not be loaded\n\n`{type(exc).__name__}`: {exc}{hint}"
+
+
 def _checkpoint_roots() -> List[Path]:
     import run_PepPhysChem_HL as runner
 
@@ -235,13 +257,71 @@ def _checkpoint_roots() -> List[Path]:
     return roots
 
 
+def _is_git_lfs_pointer(path: Path) -> bool:
+    try:
+        with open(path, "rb") as f:
+            return f.read(64).startswith(b"version https://git-lfs.github.com/spec/v1")
+    except OSError:
+        return False
+
+
+def _is_pytorch_checkpoint_file(path: Path) -> bool:
+    """True when the file looks like a real torch.save artifact (not an LFS stub)."""
+    try:
+        with open(path, "rb") as f:
+            head = f.read(4)
+    except OSError:
+        return False
+    if head[:2] == b"PK":
+        return True
+    return bool(head) and head[0:1] in (b"\x80", b"\x85", b"\x86", b"\x87", b"\x88")
+
+
+def _hf_space_repo_id() -> str:
+    return (
+        os.environ.get("PEPPHYSCHEM_HL_HF_SPACE_ID")
+        or os.environ.get("SPACE_ID")
+        or "Ibisanmi1/PepPhysChem-HL"
+    ).strip()
+
+
+def _download_checkpoint_from_hf_space(basename: str) -> Path:
+    from huggingface_hub import hf_hub_download
+
+    downloaded = hf_hub_download(
+        repo_id=_hf_space_repo_id(),
+        filename=f"checkpoints/{basename}",
+        repo_type="space",
+    )
+    return Path(downloaded).resolve()
+
+
+def _materialize_checkpoint(path: Path) -> Path:
+    """
+    Return a loadable checkpoint path.
+
+    On Hugging Face Spaces, Git LFS pointer stubs are checked out as small text
+    files starting with ``version https://git-lfs...``; torch.load then fails with
+    ``UnpicklingError: invalid load key, 'v'``. Resolve those via the Hub API.
+    """
+    resolved = path.resolve()
+    if _is_pytorch_checkpoint_file(resolved):
+        return resolved
+    if _is_git_lfs_pointer(resolved):
+        return _download_checkpoint_from_hf_space(resolved.name)
+    raise ValueError(
+        f"Checkpoint at `{resolved}` is not a valid PyTorch file. "
+        "Upload the real `.pt` weights or set PEPPHYSOCHEM_HL_HF_SPACE_ID."
+    )
+
+
 def _find_checkpoint(basenames: List[str]) -> Optional[Path]:
     for root in _checkpoint_roots():
         ck = root / "checkpoints"
         for name in basenames:
             p = ck / name
             if p.is_file():
-                return p.resolve()
+                return _materialize_checkpoint(p)
     return None
 
 
@@ -254,16 +334,17 @@ def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
         or os.environ.get("AMP_MODEL_PATH")
         or ""
     ).strip() or None
-    expected_local = _default_hybrid_checkpoint_path()
+    expected_bilstm = _default_hybrid_checkpoint_path()
+    expected_cnn = PROJECT_ROOT / "checkpoints" / DEFAULT_CNN_PHYSCHEM_CHECKPOINT_NAME
 
-    if preset_key == PRESET_RECOMMENDED:
+    if preset_key in (PRESET_CNN_BILSTM_PHYSCHEM, PRESET_RECOMMENDED, "__recommended__"):
         if env_mp:
-            return env_mp, None
+            return str(_materialize_checkpoint(Path(env_mp))), None
         ck = _find_checkpoint([DEFAULT_HYBRID_CHECKPOINT_NAME])
         if ck is None:
             raise FileNotFoundError(
-                "Checkpoint for the recommended hybrid model not found. "
-                f"Expected `{expected_local}` "
+                "Checkpoint for CNN–BiLSTM + physchem (emb.) not found. "
+                f"Expected `{expected_bilstm}` "
                 "(or the same filename under PEPPHYSOCHEM_HL_AI_ROOT/checkpoints/)."
             )
         tcp = (
@@ -273,17 +354,22 @@ def _resolve_preset(preset_key: str) -> Tuple[Optional[str], Optional[str]]:
         )
         return str(ck), tcp
 
-    if preset_key == PRESET_HYBRID_PHYSCHEM_MATRIX:
-        ck = _find_checkpoint([DEFAULT_HYBRID_CHECKPOINT_NAME])
+    if preset_key == PRESET_CNN_PHYSCHEM:
+        ck = _find_checkpoint(
+            [
+                DEFAULT_CNN_PHYSCHEM_CHECKPOINT_NAME,
+                "Half_Life_cnn_embedding_physchem.pt",
+            ]
+        )
         if ck is None:
             raise FileNotFoundError(
-                "Checkpoint for the hybrid physicochemical matrix benchmark not found. "
-                f"Expected `{expected_local}` "
+                "Checkpoint for CNN + physchem (emb.) not found. "
+                f"Expected `{expected_cnn}` "
                 "(or the same filename under PEPPHYSOCHEM_HL_AI_ROOT/checkpoints/)."
             )
         tcp = (
-            str(DEFAULT_HYBRID_TRAINING_CONFIG)
-            if DEFAULT_HYBRID_TRAINING_CONFIG.is_file()
+            str(DEFAULT_CNN_PHYSCHEM_TRAINING_CONFIG)
+            if DEFAULT_CNN_PHYSCHEM_TRAINING_CONFIG.is_file()
             else None
         )
         return str(ck), tcp
@@ -510,6 +596,15 @@ def predict_single(
             )
         return (f"### Error\n\n`{type(e).__name__}`: {e}", pd.DataFrame(), None, "", [], None)
     except Exception as e:
+        if e.__class__.__name__ == "UnpicklingError" or "invalid load key" in str(e).lower():
+            return (
+                _checkpoint_load_error_message(e),
+                pd.DataFrame(),
+                None,
+                "",
+                [],
+                None,
+            )
         return (f"### Error\n\n`{type(e).__name__}`: {e}", pd.DataFrame(), None, "", [], None)
 
     md = _format_single_markdown(result)
@@ -590,6 +685,16 @@ def predict_batch(
                 None,
             )
     except Exception as e:
+        if e.__class__.__name__ == "UnpicklingError" or "invalid load key" in str(e).lower():
+            return (
+                pd.DataFrame(),
+                _checkpoint_load_error_message(e),
+                None,
+                None,
+                "",
+                [],
+                None,
+            )
         return (
             pd.DataFrame(),
             f"### Error\n\n`{type(e).__name__}`: {e}",
@@ -1021,7 +1126,7 @@ _HERO_HTML = f"""
     <aside class="hero-aside" aria-label="Model summary">
       <div class="hero-card">
         <span class="hero-card-title">Models</span>
-        <p class="hero-card-model-hint" style="color: #ffffff !important;">Choose a preset under <strong style="color: #ffffff !important;">Half-life prediction model</strong> (recommended hybrid default or hybrid matrix benchmark).</p>
+        <p class="hero-card-model-hint" style="color: #ffffff !important;">Choose a preset under <strong style="color: #ffffff !important;">Half-life prediction model</strong>: CNN–BiLSTM + physchem (emb., default) or CNN + physchem (emb.).</p>
       </div>
     </aside>
   </div>
