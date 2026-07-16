@@ -892,13 +892,22 @@ class PepPhysChemHLPredictor:
         self.max_length = self.config.get('max_length', 100)
 
         print("✅ Pipeline initialized successfully!")
-        mt = self.config.get("model_type", "cnn_bilstm")
+        mt = self._config_model_type(self.config)
         ft = self.config.get("feature_type", "embedding")
-        if mt == "cnn_bilstm_physchem":
-            print(f"   Model: {mt} (hybrid CNN–BiLSTM + physicochemical; {ft})")
+        if self._model_uses_physchem(mt):
+            print(f"   Model: {mt} (sequence + physicochemical; {ft})")
         else:
             print(f"   Model: {mt} ({ft})")
         print(f"   Max sequence length: {self.max_length}")
+
+    @staticmethod
+    def _config_model_type(config: Dict) -> str:
+        mt = config.get("model_type") or config.get("model_type_key") or "cnn_bilstm"
+        return str(mt).lower()
+
+    @staticmethod
+    def _model_uses_physchem(model_type: str) -> bool:
+        return str(model_type).lower().endswith("_physchem")
 
     def _load_model(self, model_path: Path, config_path: Optional[Path] = None):
         """Load trained model from checkpoint."""
@@ -930,8 +939,10 @@ class PepPhysChemHLPredictor:
             }
 
 
-        model_config = config.get('model_config', {})
-        mt = config.get('model_type', 'cnn_bilstm')
+        model_config = dict(config.get('model_config', {}) or {})
+        mt = self._config_model_type(config)
+        config['model_type'] = mt
+
         if mt == 'cnn_bilstm_physchem':
             model = get_embedding_model(
                 'cnn_bilstm_physchem',
@@ -946,6 +957,31 @@ class PepPhysChemHLPredictor:
                 dropout_rate=model_config.get('dropout_rate', 0.3),
                 output_dim=model_config.get('output_dim', 1),
             )
+        elif mt.endswith('_physchem'):
+            # Single-branch hybrids (cnn_physchem, bilstm_physchem, …).
+            seq_kwargs = {
+                'vocab_size': model_config.get('vocab_size', 21),
+                'embedding_dim': model_config.get('embedding_dim', 128),
+                'physchem_input_dim': model_config.get('physchem_input_dim', 53),
+                'physchem_hidden_dims': model_config.get('physchem_hidden_dims', [128, 64]),
+                'dropout_rate': model_config.get('dropout_rate', 0.3),
+                'output_dim': model_config.get('output_dim', 1),
+            }
+            if 'conv_channels' in model_config:
+                seq_kwargs['conv_channels'] = model_config['conv_channels']
+            if 'kernel_sizes' in model_config:
+                seq_kwargs['kernel_sizes'] = model_config['kernel_sizes']
+            if 'hidden_dim' in model_config:
+                seq_kwargs['hidden_dim'] = model_config['hidden_dim']
+            elif 'lstm_hidden_dim' in model_config:
+                seq_kwargs['hidden_dim'] = model_config['lstm_hidden_dim']
+            if 'num_layers' in model_config:
+                seq_kwargs['num_layers'] = model_config['num_layers']
+            elif 'lstm_num_layers' in model_config:
+                seq_kwargs['num_layers'] = model_config['lstm_num_layers']
+            if 'bidirectional' in model_config:
+                seq_kwargs['bidirectional'] = model_config['bidirectional']
+            model = get_embedding_model(mt, **seq_kwargs)
         else:
             model = get_embedding_model(
                 mt,
@@ -1016,10 +1052,10 @@ class PepPhysChemHLPredictor:
 
 
         input_ids = self._tokenize_sequence(sequence)
-
+        mt = self._config_model_type(self.config)
 
         with torch.no_grad():
-            if self.config.get('model_type') == 'cnn_bilstm_physchem':
+            if self._model_uses_physchem(mt):
                 seq_clean = self._clean_sequence_aa(sequence)
                 physchem = EmbeddingPhysioChemDataset._extract_physchem_features(
                     self.analyzer, seq_clean
@@ -1044,7 +1080,8 @@ class PepPhysChemHLPredictor:
             Array of predicted half-life values
         """
         predictions = []
-
+        mt = self._config_model_type(self.config)
+        uses_pc = self._model_uses_physchem(mt)
 
         for i in range(0, len(sequences), batch_size):
             batch_sequences = sequences[i:i+batch_size]
@@ -1070,7 +1107,7 @@ class PepPhysChemHLPredictor:
 
 
             with torch.no_grad():
-                if self.config.get('model_type') == 'cnn_bilstm_physchem':
+                if uses_pc:
                     physchem = self._physchem_tensor_batch(batch_sequences)
                     batch_predictions = self.model(batch_tensor, physchem)
                 else:
