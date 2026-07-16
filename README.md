@@ -1,5 +1,3 @@
-
-
 # PepPhysChem-HL
 
 **PepPhysChem-HL: An Integrated Command-Line and Web Platform for Physicochemical Profiling and Deep Learning-Based Half-Life Prediction of Therapeutic Peptides**
@@ -8,15 +6,22 @@ A comprehensive computational platform that integrates established biochemical a
 
 It is intended for research and education (e.g. open demos and reproducible workflows). Predictions are computational estimates, not clinical or regulatory advice.
 
-**Hugging Face Space:** [Ibisanmi1/PepPhysChem-HL](https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL). 
+**Hugging Face Space:** [Ibisanmi1/PepPhysChem-HL](https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL).
+
+### Web interface (Gradio / Hugging Face)
+
+Launch locally with `python app.py`, or use the Space above. The UI exposes **two** half-life models:
+
+| Dropdown option | Checkpoint | Training config |
+| --- | --- | --- |
+| **CNN–BiLSTM + physchem (emb.) — default** | `checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt` | `training_logs/1_cnn_bilstm_hybrid_physchem_matrix/training_config.json` |
+| **CNN + physchem (emb.)** | `checkpoints/Half_Life_cnn_embedding_physchem_run1.pt` | `training_logs/1_cnn_embedding_hybrid_physchem_matrix/training_config.json` |
 
 ### Step 1: Clone or Navigate to Project Directory
 
-git clone https://github.com/Ibisanmi1/PepPhysChem-HL.git
-
-
 ```bash
-cd /path/to/PepPhysChem-HL
+git clone https://github.com/Ibisanmi1/PepPhysChem-HL.git
+cd PepPhysChem-HL
 ```
 
 ### Step 2: Install Dependencies
@@ -25,19 +30,17 @@ cd /path/to/PepPhysChem-HL
 pip install -r requirements.txt
 ```
 
-**Note**: RDKit installation may require additional steps:
+**Note**: RDKit installation may require additional steps (used for optional full physicochemical profiles in the analyzer, not as model input features during training):
 - **macOS**: `conda install -c conda-forge rdkit`
 - **Linux**: `conda install -c conda-forge rdkit` or use pip
 - **Windows**: Use conda or follow RDKit installation guide
 
-
-
-Usage
+## Usage (command line)
 
 #### Example 1: Single Sequence Analysis
 
-Uses the **default recommended checkpoint** automatically:
-`checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt` (hybrid CNN–BiLSTM + physicochemical matrix; top-ranked in `data/model_comparison.csv`).
+Uses the **default** checkpoint automatically:
+`checkpoints/Half_Life_cnn_bilstm_embedding_physchem_run1.pt` (CNN–BiLSTM + physicochemical, embedding; top-ranked hybrid in `data/model_comparison.csv`).
 
 **Training logs:** `training_logs/1_cnn_bilstm_hybrid_physchem_matrix/` (`training.log`, `training_config.json`, `final_results.json`, `epoch_metrics.csv`)
 
@@ -46,7 +49,6 @@ python run_PepPhysChem_HL.py \
     --sequence "KWKLFKKIGAVLKVL" \
     --output "single_result.csv"
 ```
-
 
 #### Example 2: Batch Analysis
 
@@ -75,9 +77,9 @@ python run_PepPhysChem_HL.py \
 - Comprehensive report (`*_analysis_report.txt`)
 - And more (see Output Files section below)
 
-#### Example 3: Use an explicit checkpoint (optional)
+#### Example 3: Explicit checkpoint (optional)
 
-Omit `--model_path` to use the default `Half_Life_cnn_bilstm_embedding_physchem_run1.pt` weights above.
+Omit `--model_path` to use the default CNN–BiLSTM + physchem weights above.
 
 ```bash
 python run_PepPhysChem_HL.py \
@@ -87,17 +89,17 @@ python run_PepPhysChem_HL.py \
     --output "single_result_hybrid.csv"
 ```
 
-**Alternative architecture** (embedding-only CNN–BiLSTM, no physicochemical block):
+**Alternative architecture** (CNN + physchem, embedding — same second option as the web UI):
 
 ```bash
 python run_PepPhysChem_HL.py \
-    --model_path "checkpoints/Half_Life_cnn_bilstm_embedding_2.pt" \
+    --model_path "checkpoints/Half_Life_cnn_embedding_physchem_run1.pt" \
+    --training_config "training_logs/1_cnn_embedding_hybrid_physchem_matrix/training_config.json" \
     --sequence "KWKLFKKIGAVLKVL" \
-    --output "single_result_embedding_only.csv"
+    --output "single_result_cnn_physchem.csv"
 ```
 
-
-#### Example 5: Force CPU Usage
+#### Example 4: Force CPU Usage
 
 ```bash
 python run_PepPhysChem_HL.py \
@@ -147,20 +149,15 @@ ACDEFGHIKLMNPQRSTVWY
 
 ```
 PepPhysChem-HL/
-├── run_PepPhysChem_HL.py          # Main entry point
-├── run_analysis.sh             # Helper shell script
-├── requirements.txt           # Python dependencies
-├── checkpoints/                # Trained model files
-├── input/                     # Input files (CSV/FASTA)
-├── output/                     # Output files (results, plots, reports)
-├── scripts/                    # Additional scripts
-│   └── inference.py           # Direct inference script
-├── src/                        # Source code modules
-│   ├── models.py              # Neural network models
-│   ├── data_processing.py     # Data loading and preprocessing
-│   ├── physicochemical_analyzer.py  # Property calculations
-│   └── ...
-└── training/                   # Training scripts (see training/README.md)
+├── app.py                         # Gradio / Hugging Face web UI
+├── run_PepPhysChem_HL.py          # CLI entry point
+├── requirements.txt               # Python dependencies
+├── checkpoints/                   # Trained model weights (.pt)
+├── training_logs/                 # Per-run configs and metrics
+├── input/                         # Input files (CSV/FASTA)
+├── output/                        # Output files (results, plots, reports)
+├── scripts/                       # Training / utility scripts
+└── src/                           # Core modules (models, datasets, analyzer, …)
 ```
 
 If this pipeline contributes to your research, please cite:
