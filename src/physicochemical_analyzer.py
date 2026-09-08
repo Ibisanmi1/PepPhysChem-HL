@@ -7,7 +7,6 @@ from typing import Dict, List, Union, Optional
 import re
 from collections import Counter
 
-
 class PhysicochemicalAnalyzer:
     """
     Advanced physicochemical analyzer for therapeutic peptides.
