@@ -31,6 +31,15 @@ class PhysicochemicalAnalyzer:
         }
 
 
+        self.pKa_bjellqvist = {
+            'positive': {'Nterm': 7.5, 'K': 10.0, 'R': 12.0, 'H': 5.98},
+            'negative': {'Cterm': 3.55, 'D': 4.05, 'E': 4.45, 'C': 9.0, 'Y': 10.0},
+            'cterm_residue': {'D': 4.55, 'E': 4.75},
+            'nterm_residue': {'A': 7.59, 'M': 7.00, 'S': 6.93, 'P': 8.36,
+                              'T': 6.82, 'V': 7.44, 'E': 7.70}
+        }
+
+
         self.hydrophobicity_scale = {
             'A': 1.8, 'R': -4.5, 'N': -3.5, 'D': -3.5, 'C': 2.5,
             'Q': -3.5, 'E': -3.5, 'G': -0.4, 'H': -3.2, 'I': 4.5,
@@ -63,27 +72,27 @@ class PhysicochemicalAnalyzer:
         self.acidic_aa = {'D', 'E'}
 
 
-        self.aa_to_smiles = {
-            'A': 'C[C@H](N)C(=O)O',
-            'R': 'N=C(N)NCCC[C@H](N)C(=O)O',
-            'N': 'N[C@@H](CC(=O)N)C(=O)O',
-            'D': 'N[C@@H](CC(=O)O)C(=O)O',
-            'C': 'N[C@@H](CS)C(=O)O',
-            'Q': 'N[C@@H](CCC(=O)N)C(=O)O',
-            'E': 'N[C@@H](CCC(=O)O)C(=O)O',
-            'G': 'NCC(=O)O',
-            'H': 'N[C@@H](CC1=CN=CN1)C(=O)O',
-            'I': 'CC[C@H](C)[C@H](N)C(=O)O',
-            'L': 'CC(C)C[C@H](N)C(=O)O',
-            'K': 'NCCCC[C@H](N)C(=O)O',
-            'M': 'CSCC[C@H](N)C(=O)O',
-            'F': 'N[C@@H](CC1=CC=CC=C1)C(=O)O',
-            'P': 'N1[C@H](CCC1)C(=O)O',
-            'S': 'N[C@@H](CO)C(=O)O',
-            'T': 'C[C@H](O)[C@H](N)C(=O)O',
-            'W': 'N[C@@H](CC1=CNC2=CC=CC=C12)C(=O)O',
-            'Y': 'N[C@@H](CC1=CC=C(O)C=C1)C(=O)O',
-            'V': 'CC(C)[C@H](N)C(=O)O'
+        self.residue_smiles = {
+            'A': 'N[C@@H](C)C(=O)',
+            'R': 'N[C@@H](CCCNC(N)=N)C(=O)',
+            'N': 'N[C@@H](CC(N)=O)C(=O)',
+            'D': 'N[C@@H](CC(O)=O)C(=O)',
+            'C': 'N[C@@H](CS)C(=O)',
+            'Q': 'N[C@@H](CCC(N)=O)C(=O)',
+            'E': 'N[C@@H](CCC(O)=O)C(=O)',
+            'G': 'NCC(=O)',
+            'H': 'N[C@@H](Cc1c[nH]cn1)C(=O)',
+            'I': 'N[C@@H]([C@@H](C)CC)C(=O)',
+            'L': 'N[C@@H](CC(C)C)C(=O)',
+            'K': 'N[C@@H](CCCCN)C(=O)',
+            'M': 'N[C@@H](CCSC)C(=O)',
+            'F': 'N[C@@H](Cc1ccccc1)C(=O)',
+            'P': 'N1CCC[C@H]1C(=O)',
+            'S': 'N[C@@H](CO)C(=O)',
+            'T': 'N[C@@H]([C@H](O)C)C(=O)',
+            'W': 'N[C@@H](Cc1c[nH]c2ccccc12)C(=O)',
+            'Y': 'N[C@@H](Cc1ccc(O)cc1)C(=O)',
+            'V': 'N[C@@H](C(C)C)C(=O)'
         }
 
     def _validate_sequence(self, sequence: str) -> str:
@@ -140,6 +149,66 @@ class PhysicochemicalAnalyzer:
 
         return charge
 
+    def calculate_charge_bjellqvist(self, sequence: str, ph: float) -> float:
+        """
+        Net charge on the Bjellqvist pKa set used by ExPASy Compute pI/Mw, including
+        the residue-specific N- and C-terminal corrections.
+
+        Args:
+            sequence: Amino acid sequence
+            ph: pH value
+
+        Returns:
+            Net charge at the requested pH
+        """
+        sequence = self._validate_sequence(sequence)
+
+        positive = dict(self.pKa_bjellqvist['positive'])
+        negative = dict(self.pKa_bjellqvist['negative'])
+
+        if sequence[0] in self.pKa_bjellqvist['nterm_residue']:
+            positive['Nterm'] = self.pKa_bjellqvist['nterm_residue'][sequence[0]]
+        if sequence[-1] in self.pKa_bjellqvist['cterm_residue']:
+            negative['Cterm'] = self.pKa_bjellqvist['cterm_residue'][sequence[-1]]
+
+        charge = 1.0 / (1.0 + 10 ** (ph - positive['Nterm']))
+        charge -= 1.0 / (1.0 + 10 ** (negative['Cterm'] - ph))
+
+        for aa in ('K', 'R', 'H'):
+            charge += sequence.count(aa) / (1.0 + 10 ** (ph - positive[aa]))
+        for aa in ('D', 'E', 'C', 'Y'):
+            charge -= sequence.count(aa) / (1.0 + 10 ** (negative[aa] - ph))
+
+        return charge
+
+    def calculate_isoelectric_point(self, sequence: str, tolerance: float = 1e-6) -> float:
+        """
+        Isoelectric point on the Bjellqvist scale, solved by bisection across the
+        full pH range.
+
+        The search is not bracketed to pH 4.05-12.0 as in Biopython, which would
+        saturate at those bounds for strongly acidic or Arg-rich peptides and
+        return a pH at which the peptide still carries several units of charge.
+
+        Args:
+            sequence: Amino acid sequence
+            tolerance: Convergence tolerance in pH units
+
+        Returns:
+            pH at which the net charge is zero
+        """
+        sequence = self._validate_sequence(sequence)
+
+        low, high = 0.0, 14.0
+        while high - low > tolerance:
+            middle = (low + high) / 2.0
+            if self.calculate_charge_bjellqvist(sequence, middle) > 0:
+                low = middle
+            else:
+                high = middle
+
+        return (low + high) / 2.0
+
     def calculate_hydrophobicity(self, sequence: str) -> Dict[str, float]:
         """
         Calculate hydrophobicity metrics using multiple scales.
@@ -172,27 +241,68 @@ class PhysicochemicalAnalyzer:
             'hydrophobic_count': hydrophobic_count
         }
 
-    def calculate_hydrophobic_moment(self, sequence: str, angle_per_residue: float = 100.0) -> float:
+    def _window_moment(self, window: str, angle_per_residue: float) -> float:
+        """Eisenberg hydrophobic moment of a single window, normalised per residue."""
+        if not window:
+            return 0.0
+
+        sum_cos = 0.0
+        sum_sin = 0.0
+        for i, aa in enumerate(window):
+            angle = np.radians(angle_per_residue * i)
+            hydrophobicity = self.eisenberg_scale.get(aa, 0.0)
+            sum_cos += hydrophobicity * np.cos(angle)
+            sum_sin += hydrophobicity * np.sin(angle)
+
+        return float(np.sqrt(sum_cos**2 + sum_sin**2) / len(window))
+
+    def calculate_hydrophobic_moment(self, sequence: str, angle_per_residue: float = 100.0,
+                                     window: int = 11) -> float:
         """
-        Calculate hydrophobic moment using Eisenberg scale.
-        Useful for detecting amphipathic helices.
+        Calculate the Eisenberg hydrophobic moment (uH), the magnitude of the vector
+        sum of residue hydrophobicities arranged at a fixed angle per residue.
+
+        The moment is evaluated over sliding windows and the maximum is returned,
+        following the convention of EMBOSS hmoment and HeliQuest.
 
         Args:
             sequence: Amino acid sequence
-            angle_per_residue: Angle per residue in degrees (100° for alpha helix)
+            angle_per_residue: Angle per residue in degrees (100° for alpha helix,
+                160° for beta sheet)
+            window: Sliding window length in residues; shortened to the sequence
+                length for peptides shorter than the window
 
         Returns:
-            Hydrophobic moment
+            Maximum windowed hydrophobic moment (>= 0)
         """
         sequence = self._validate_sequence(sequence)
 
-        moment = 0.0
-        for i, aa in enumerate(sequence):
-            angle = np.radians(angle_per_residue * i)
-            hydrophobicity = self.eisenberg_scale.get(aa, 0.0)
-            moment += hydrophobicity * np.cos(angle)
+        if not sequence:
+            return 0.0
 
-        return moment / len(sequence) if len(sequence) > 0 else 0.0
+        window = min(window, len(sequence))
+        moments = [
+            self._window_moment(sequence[i:i + window], angle_per_residue)
+            for i in range(len(sequence) - window + 1)
+        ]
+
+        return max(moments) if moments else 0.0
+
+    def calculate_global_hydrophobic_moment(self, sequence: str,
+                                            angle_per_residue: float = 100.0) -> float:
+        """
+        Calculate the Eisenberg hydrophobic moment over the whole sequence
+        without windowing.
+
+        Args:
+            sequence: Amino acid sequence
+            angle_per_residue: Angle per residue in degrees
+
+        Returns:
+            Whole-sequence hydrophobic moment (>= 0)
+        """
+        sequence = self._validate_sequence(sequence)
+        return self._window_moment(sequence, angle_per_residue)
 
     def calculate_side_chain_volume(self, sequence: str) -> Dict[str, float]:
         """
@@ -290,7 +400,7 @@ class PhysicochemicalAnalyzer:
             properties = {
                 'length': len(sequence),
                 'molecular_weight': analysis.molecular_weight(),
-                'isoelectric_point': analysis.isoelectric_point(),
+                'isoelectric_point': self.calculate_isoelectric_point(sequence),
                 'aromaticity': analysis.aromaticity(),
                 'instability_index': analysis.instability_index(),
                 'gravy': analysis.gravy(),
@@ -307,9 +417,53 @@ class PhysicochemicalAnalyzer:
         except Exception as e:
             raise RuntimeError(f"Error calculating basic properties: {str(e)}")
 
+    def build_peptide_smiles(self, sequence: str) -> Optional[str]:
+        """
+        Build the SMILES string of the linear peptide with free N- and C-termini.
+
+        Residue templates are joined through backbone amide bonds, so one water is
+        eliminated per peptide bond. Joining free amino acids instead would leave a
+        disconnected mixture and inflate polarity-derived descriptors.
+
+        Args:
+            sequence: Amino acid sequence
+
+        Returns:
+            SMILES string, or None if a residue is not parameterised
+        """
+        sequence = self._validate_sequence(sequence)
+
+        parts = []
+        for aa in sequence:
+            if aa not in self.residue_smiles:
+                return None
+            parts.append(self.residue_smiles[aa])
+
+        return ''.join(parts) + 'O'
+
+    def sequence_to_mol(self, sequence: str) -> Optional[Chem.Mol]:
+        """
+        Convert a sequence to an RDKit molecule of the intact peptide.
+
+        Args:
+            sequence: Amino acid sequence
+
+        Returns:
+            RDKit Mol of the linear peptide, or None if construction fails
+        """
+        smiles = self.build_peptide_smiles(sequence)
+        if smiles is None:
+            return None
+
+        mol = Chem.MolFromSmiles(smiles)
+        if mol is None:
+            mol = Chem.MolFromSequence(sequence)
+
+        return mol
+
     def calculate_rdkit_properties(self, sequence: str) -> Optional[Dict[str, float]]:
         """
-        Calculate molecular properties using RDKit.
+        Calculate molecular properties of the intact peptide using RDKit.
 
         Args:
             sequence: Amino acid sequence
@@ -320,21 +474,13 @@ class PhysicochemicalAnalyzer:
         sequence = self._validate_sequence(sequence)
 
         try:
-
-            smiles_parts = []
-            for aa in sequence:
-                if aa in self.aa_to_smiles:
-                    smiles_parts.append(self.aa_to_smiles[aa])
-                else:
-                    return None
-
-            smiles = '.'.join(smiles_parts)
-            mol = Chem.MolFromSmiles(smiles)
+            mol = self.sequence_to_mol(sequence)
 
             if mol is None:
                 return None
 
             properties = {
+                'rdkit_mol_wt': Descriptors.MolWt(mol),
                 'logP': Descriptors.MolLogP(mol),
                 'tpsa': Descriptors.TPSA(mol),
                 'num_h_donors': Descriptors.NumHDonors(mol),
@@ -362,6 +508,8 @@ class PhysicochemicalAnalyzer:
         sequence = self._validate_sequence(sequence)
 
         hydrophobic_moment = self.calculate_hydrophobic_moment(sequence)
+        global_moment = self.calculate_global_hydrophobic_moment(sequence)
+        beta_moment = self.calculate_hydrophobic_moment(sequence, angle_per_residue=160.0)
 
 
         hydrophobic_count = sum(1 for aa in sequence if aa in self.hydrophobic_aa)
@@ -373,6 +521,8 @@ class PhysicochemicalAnalyzer:
 
         return {
             'hydrophobic_moment': hydrophobic_moment,
+            'hydrophobic_moment_global': global_moment,
+            'hydrophobic_moment_beta': beta_moment,
             'amphipathicity_index': amphipathicity_index,
             'amphipathic_patterns': amphipathic_patterns
         }
