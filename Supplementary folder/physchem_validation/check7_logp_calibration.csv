@@ -1,0 +1,18 @@
+molecule,smiles,class,logp_experimental,logp_rdkit,heavy_atoms,delta
+methanol,CO,drug-like,-0.77,-0.3915,2,0.3785
+ethanol,CCO,drug-like,-0.31,-0.0014000000000000123,3,0.3086
+acetone,CC(C)=O,drug-like,-0.24,0.5952999999999999,4,0.8352999999999999
+phenol,Oc1ccccc1,drug-like,1.46,1.3921999999999999,7,-0.06780000000000008
+aniline,Nc1ccccc1,drug-like,0.9,1.2688000000000001,7,0.3688000000000001
+benzene,c1ccccc1,drug-like,2.13,1.6866,6,-0.4433999999999998
+toluene,Cc1ccccc1,drug-like,2.73,1.99502,7,-0.73498
+chlorobenzene,Clc1ccccc1,drug-like,2.84,2.34,7,-0.5
+naphthalene,c1ccc2ccccc2c1,drug-like,3.3,2.839800000000001,10,-0.4601999999999986
+caffeine,Cn1cnc2c1c(=O)n(C)c(=O)n2C,drug-like,-0.07,-1.0293,14,-0.9593
+aspirin,CC(=O)Oc1ccccc1C(=O)O,drug-like,1.19,1.3101,13,0.1201000000000001
+paracetamol,CC(=O)Nc1ccc(O)cc1,drug-like,0.46,1.3505999999999998,11,0.8905999999999998
+ibuprofen,CC(C)Cc1ccc(cc1)C(C)C(=O)O,drug-like,3.97,3.073200000000001,15,-0.8967999999999994
+diazepam,CN1c2ccc(Cl)cc2C(=NCC1=O)c1ccccc1,drug-like,2.82,3.1538000000000013,20,0.33380000000000143
+glycine,NCC(=O)O,zwitterionic amino acid,-3.21,-0.9702999999999999,5,2.2397
+phenylalanine,N[C@@H](Cc1ccccc1)C(=O)O,zwitterionic amino acid,-1.38,0.641,12,2.021
+tryptophan,N[C@@H](Cc1c[nH]c2ccccc12)C(=O)O,zwitterionic amino acid,-1.06,1.1223000000000003,15,2.1823000000000006
