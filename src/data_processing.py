@@ -10,6 +10,7 @@ import os
 import sys
 
 from .physicochemical_analyzer import PhysicochemicalAnalyzer
+from .modelling_filters import filter_sequences_and_targets
 
 
 class PhysioChemDataset(Dataset):
@@ -217,12 +218,12 @@ class PhysioChemDataProcessor:
         """
         df = pd.read_csv(file_path)
 
-
-        sequences = df[sequence_col].astype(str).tolist()
+        sequences = df[sequence_col].tolist()
         targets = df[target_col].values.astype(np.float32)
 
-
-        sequences = [seq.strip().upper() for seq in sequences]
+        sequences, targets = filter_sequences_and_targets(
+            sequences, targets, max_length=self.max_length
+        )
 
         return sequences, targets
 
