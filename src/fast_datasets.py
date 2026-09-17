@@ -5,6 +5,8 @@ from torch.utils.data import Dataset
 from typing import List, Dict
 import sys
 
+from .modelling_filters import filter_half_life_dataframe
+
 
 class FastPeptideDataset(Dataset):
     """
@@ -31,11 +33,11 @@ class FastPeptideDataset(Dataset):
 
         assert sequence_col in self.df.columns and label_col in self.df.columns
 
+        self.df = filter_half_life_dataframe(
+            self.df, sequence_col=sequence_col, max_length=max_length
+        )
 
-        self.df['seq_len'] = self.df[sequence_col].astype(str).str.len()
-        self.df = self.df[self.df['seq_len'] <= max_length]
-
-        self.sequences = self.df[sequence_col].astype(str).tolist()
+        self.sequences = self.df[sequence_col].astype(str).str.strip().str.upper().tolist()
         self.y = self.df[label_col].values.astype(np.float32)
         self.max_length = max_length
 
