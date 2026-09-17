@@ -6,6 +6,7 @@ from typing import List, Dict
 import sys
 
 from .physicochemical_analyzer import PhysicochemicalAnalyzer
+from .modelling_filters import filter_half_life_dataframe
 
 
 class EmbeddingPeptideDataset(Dataset):
@@ -33,11 +34,11 @@ class EmbeddingPeptideDataset(Dataset):
 
         assert sequence_col in self.df.columns and label_col in self.df.columns
 
+        self.df = filter_half_life_dataframe(
+            self.df, sequence_col=sequence_col, max_length=max_length
+        )
 
-        self.df['seq_len'] = self.df[sequence_col].astype(str).str.len()
-        self.df = self.df[self.df['seq_len'] <= max_length]
-
-        self.sequences = self.df[sequence_col].astype(str).tolist()
+        self.sequences = self.df[sequence_col].astype(str).str.strip().str.upper().tolist()
         self.y = self.df[label_col].values.astype(np.float32)
         self.max_length = max_length
 
@@ -110,10 +111,11 @@ class EmbeddingPhysioChemDataset(Dataset):
 
         assert sequence_col in self.df.columns and label_col in self.df.columns
 
-        self.df['seq_len'] = self.df[sequence_col].astype(str).str.len()
-        self.df = self.df[self.df['seq_len'] <= max_length].copy()
+        self.df = filter_half_life_dataframe(
+            self.df, sequence_col=sequence_col, max_length=max_length
+        )
 
-        self.sequences = self.df[sequence_col].astype(str).tolist()
+        self.sequences = self.df[sequence_col].astype(str).str.strip().str.upper().tolist()
         self.y = self.df[label_col].values.astype(np.float32)
         self.max_length = max_length
         self.aa_to_idx = {aa: idx + 1 for idx, aa in enumerate('ACDEFGHIKLMNPQRSTVWY')}
