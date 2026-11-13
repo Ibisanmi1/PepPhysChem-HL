@@ -1,13 +1,4 @@
 #!/usr/bin/env bash
-# Save your Hugging Face token for `hf` and Git operations against hf.co.
-# Usage (pick one):
-#   export HF_TOKEN=hf_xxxxxxxx
-#   ./scripts/hf_set_token.sh
-# Or pass the token as the first argument (still ends up in shell history):
-#   ./scripts/hf_set_token.sh hf_xxxxxxxx
-#
-# Create a token with write access: https://huggingface.co/settings/tokens
-# Do not commit real tokens.
 
 set -euo pipefail
 
