@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-# One-commit "orphan" snapshot for Hugging Face Spaces — no old Git history, so no binary blobs
-# in the push pack (fixes: "rejected because it contains binary files" after git rm --cached).
-#
-# Prereq: working tree clean (commit or stash). Checkpoints/images may stay on disk if .gitignored.
-#
-# Usage (from repo root):
-#   chmod +x scripts/hf_push_space_orphan.sh
-#   ./scripts/hf_push_space_orphan.sh
-#
-# Your current branch (e.g. main) is NOT rewritten — only the Space remote main is replaced.
 
 set -euo pipefail
 
