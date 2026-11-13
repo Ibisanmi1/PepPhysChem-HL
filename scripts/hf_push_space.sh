@@ -1,16 +1,4 @@
 #!/usr/bin/env bash
-# Push current branch to your Hugging Face Space Git remote.
-# Prereq: run scripts/hf_set_token.sh (or hf auth login) first.
-#
-# Usage (from repo root):
-#   ./scripts/hf_push_space.sh              # push HEAD -> hf main
-#   ./scripts/hf_push_space.sh my-branch    # push my-branch -> hf main
-#
-# If push is rejected (Space has commits you do not), either merge first (see docs/hf-space/DEPLOY.md)
-# or overwrite the Space branch (only if you accept losing remote-only commits):
-#   HF_PUSH_FORCE=1 ./scripts/hf_push_space.sh
-#
-# Space: https://huggingface.co/spaces/Ibisanmi1/PepPhysChem-HL
 
 set -euo pipefail
 
