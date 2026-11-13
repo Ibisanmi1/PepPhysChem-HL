@@ -1,0 +1,39 @@
+                              PEPPHYSCHEM-HL SOFTWARE LICENCE
+                  
+
+                     Copyright © 2026 Kumar Group, UNSW. All rights reserved.
+
+Definitions
+
+“Software” means the PepPhysChem-HL source code, scripts, documentation, model weights, and other materials specifically identified by the rights holder as distributed under this Licence.
+
+“Recipient” means any person or organisation that receives or uses the Software.
+
+“Commercial Purpose” means use intended for or directed toward commercial advantage or monetary compensation. This includes use in the business activities of a for-profit organisation; providing the Software or its outputs as part of a paid service; or incorporating the Software into a product or service offered commercially.
+
+Permission for noncommercial use
+
+Subject to this Licence, Kumar Group, UNSW grants the Recipient a non-exclusive, royalty-free licence to use, copy, run, and modify the Software solely for noncommercial research, academic teaching, and personal study.
+
+The Recipient may create modified versions for these permitted purposes, provided that each modified version clearly identifies the changes made.
+
+Sharing copies
+
+The Recipient may share unmodified or modified copies with other individuals or organisations for permitted noncommercial purposes, provided that each copy includes this Licence and all copyright and attribution notices.
+
+The Recipient must not distribute the Software or modified versions for a Commercial Purpose, or to a person or organisation for a Commercial Purpose, without prior written permission from Kumar Group, UNSW.
+
+Commercial use
+
+This Licence does not grant permission to use, distribute, modify, or incorporate the Software for a Commercial Purpose. Anyone seeking such permission must obtain a separate written licence from Kumar Group, UNSW before that use.
+
+For commercial licensing enquiries, contact: [insert approved contact or office and email address].
+
+Attribution
+
+If the Recipient publishes work that uses or is based on the Software, the Recipient must cite the PepPhysChem-HL publication:
+
+Third-party materials
+
+This Licence applies only to materials owned by, or licensable by, Kumar Group, UNSW. Third-party software, data, model weights, and other materials included with or used by the Software may be subject to separate licence terms. Those terms continue to apply and are not changed by this Licence.
+
