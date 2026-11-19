@@ -1,6 +1,6 @@
-                                					      PEPPHYSCHEM-HL SOFTWARE LICENCE
-
-                                				Copyright © 2026 Authors & UNSW. All rights reserved.
+                    					PEPPHYSCHEM-HL SOFTWARE LICENCE
+                    				
+                                    Copyright © 2026 Authors & UNSW. All rights reserved.
 
 
 Definitions
@@ -27,7 +27,7 @@ The Recipient must not distribute the Software or modified versions for a Commer
 Commercial use
 This Licence does not grant permission to use, distribute, modify or incorporate the Software for a Commercial Purpose. Anyone seeking such permission must obtain a separate written licence from the Authors and UNSW before that use.
 
-For commercial licensing enquiries, contact: [insert approved contact or office and email address].
+For commercial licensing enquiries, contact: t.ibisanmi@unsw.edu.au, n.kumar@unsw.edu.au.
 
 Attribution
 If the Recipient publishes work that uses or is based on the Software, the Recipient must cite the PepPhysChem-HL publication:
